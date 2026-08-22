@@ -13,6 +13,7 @@
         <a class="navbar-brand" href="/">Rapat App</a>
         <div class="navbar-nav me-auto">
             <a class="nav-link text-white" href="/meetings">Rapat</a>
+            <a class="nav-link text-white" href="/meetings/new" sec:authorize="hasRole('KETUA_DIVISI')">Buat Rapat</a>
             <a class="nav-link text-white" href="/admin/divisions" sec:authorize="hasRole('ADMIN')">Divisi</a>
             <a class="nav-link text-white" href="/admin/users" sec:authorize="hasRole('ADMIN')">Pengguna</a>
         </div>
