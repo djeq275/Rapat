@@ -1,0 +1,14 @@
+.env
+*.env.local
+
+target/
+build/
+.gradle/
+
+*.iml
+.idea/
+.vscode/
+*.class
+
+application-local.yml
+application-local.properties
