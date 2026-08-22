@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007-create-meeting-notetaker-table" author="vibe1">
+        <createTable tableName="meeting_notetaker">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="meeting_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="granted_by" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="granted_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="meeting_notetaker" columnNames="meeting_id, user_id"
+                              constraintName="uk_meeting_notetaker"/>
+        <addForeignKeyConstraint baseTableName="meeting_notetaker" baseColumnNames="meeting_id"
+                                  constraintName="fk_meeting_notetaker_meeting"
+                                  referencedTableName="meeting" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="meeting_notetaker" baseColumnNames="user_id"
+                                  constraintName="fk_meeting_notetaker_user"
+                                  referencedTableName="app_user" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="meeting_notetaker" baseColumnNames="granted_by"
+                                  constraintName="fk_meeting_notetaker_granted_by"
+                                  referencedTableName="app_user" referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

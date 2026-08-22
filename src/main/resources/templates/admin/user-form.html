@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Form Pengguna')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 500px;">
+    <h1 class="h4 mb-3">Form Pengguna</h1>
+    <form method="post" th:object="${form}"
+          th:action="${userId} != null ? @{/admin/users/{id}(id=${userId})} : @{/admin/users}">
+
+        <div class="alert alert-danger" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+
+        <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" type="email" th:field="*{email}"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="fullName">Nama Lengkap</label>
+            <input class="form-control" id="fullName" th:field="*{fullName}"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="role">Role</label>
+            <select class="form-select" id="role" th:field="*{role}">
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="divisionId">Divisi</label>
+            <select class="form-select" id="divisionId" th:field="*{divisionId}">
+                <option value="">- Tidak ada (Admin/Direktur) -</option>
+                <option th:each="d : ${divisions}" th:value="${d.id}" th:text="${d.name}"></option>
+            </select>
+        </div>
+        <div class="mb-3 form-check">
+            <input class="form-check-input" id="divisionLeader" type="checkbox" th:field="*{divisionLeader}"/>
+            <label class="form-check-label" for="divisionLeader">Jadikan Ketua Divisi (hanya berlaku untuk role Ketua Divisi)</label>
+        </div>
+        <div class="mb-3 form-check">
+            <input class="form-check-input" id="enabled" type="checkbox" th:field="*{enabled}"/>
+            <label class="form-check-label" for="enabled">Aktif</label>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" type="password" th:field="*{password}"/>
+            <div class="form-text">Kosongkan jika tidak ingin mengubah password / akun hanya login lewat Google.</div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Simpan</button>
+        <a class="btn btn-link" th:href="@{/admin/users}">Batal</a>
+    </form>
+</main>
+</body>
+</html>
