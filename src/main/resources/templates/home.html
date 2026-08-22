@@ -6,6 +6,12 @@
 <main class="container">
     <h1 class="h4">Selamat datang, <span th:text="${principal.fullName}"></span></h1>
     <p class="text-muted" th:text="${principal.role}"></p>
+
+    <div class="alert alert-warning d-flex justify-content-between align-items-center" th:if="${needsCalendarConsent}">
+        <span>Hubungkan Google Calendar supaya rapat yang Anda buat mengirim undangan otomatis.</span>
+        <a class="btn btn-sm btn-warning" th:href="@{/oauth2/authorization/google-calendar}">Hubungkan</a>
+    </div>
+
     <p>Fitur penjadwalan &amp; notulensi rapat akan tampil di sini.</p>
 </main>
 </body>

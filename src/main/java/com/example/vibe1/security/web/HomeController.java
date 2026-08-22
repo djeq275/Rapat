@@ -5,14 +5,21 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.example.vibe1.calendar.CalendarConsentStatus;
 import com.example.vibe1.security.UserPrincipal;
 
+import lombok.RequiredArgsConstructor;
+
 @Controller
+@RequiredArgsConstructor
 public class HomeController {
+
+    private final CalendarConsentStatus calendarConsentStatus;
 
     @GetMapping("/")
     public String home(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         model.addAttribute("principal", principal);
+        model.addAttribute("needsCalendarConsent", calendarConsentStatus.needsConsent(principal.getUsername()));
         return "home";
     }
 }
