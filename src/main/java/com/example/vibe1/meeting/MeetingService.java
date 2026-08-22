@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPort {
+public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPort, MeetingSyncAuthorizationPort {
 
     private final MeetingRepository meetingRepository;
     private final MeetingParticipantRepository participantRepository;
@@ -116,5 +117,20 @@ public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPo
         meeting.setCalendarSyncStatus(CalendarSyncStatus.FAILED);
         meeting.setCalendarSyncError(errorMessage);
         meetingRepository.save(meeting);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canRetrySync(User user, Long meetingId) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new IllegalArgumentException("Rapat tidak ditemukan: " + meetingId));
+        return user.getRole() == Role.ADMIN || user.getId().equals(meeting.getOrganizer().getId());
+    }
+
+    @Override
+    public void assertCanRetrySync(User user, Long meetingId) {
+        if (!canRetrySync(user, meetingId)) {
+            throw new AccessDeniedException("Anda tidak berhak menjalankan ulang sync rapat ini");
+        }
     }
 }

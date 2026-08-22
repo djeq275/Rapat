@@ -16,6 +16,8 @@ import com.example.vibe1.meeting.MeetingAccessService;
 import com.example.vibe1.meeting.MeetingParticipantRepository;
 import com.example.vibe1.meeting.MeetingRepository;
 import com.example.vibe1.meeting.MeetingService;
+import com.example.vibe1.meeting.NotetakerService;
+import com.example.vibe1.meeting.NotulensiAccessService;
 import com.example.vibe1.security.GoogleOidcUserService;
 import com.example.vibe1.security.SecurityConfig;
 import com.example.vibe1.user.Role;
@@ -43,6 +45,10 @@ class MeetingControllerAccessTest {
     MeetingService meetingService;
     @MockitoBean
     MeetingAccessService meetingAccessService;
+    @MockitoBean
+    NotulensiAccessService notulensiAccessService;
+    @MockitoBean
+    NotetakerService notetakerService;
     @MockitoBean
     MeetingRepository meetingRepository;
     @MockitoBean
