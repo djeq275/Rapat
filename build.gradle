@@ -70,3 +70,21 @@ dependencyManagement {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Loads .env into the bootRun JVM's process environment only -- so
+// application.properties' ${GOOGLE_OAUTH_CLIENT_ID}-style placeholders and
+// docker compose's own ${DB_...} substitution (see compose.yaml) both resolve
+// from the same file for local dev. Deliberately not wired into `test`:
+// tests must stay hermetic and not depend on a developer's local .env.
+tasks.named('bootRun') {
+	def envFile = file('.env')
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			line = line.trim()
+			if (line && !line.startsWith('#') && line.contains('=')) {
+				def (key, value) = line.split('=', 2)
+				environment key, value
+			}
+		}
+	}
+}
