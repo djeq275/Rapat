@@ -8,11 +8,15 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.example.vibe1.meeting.CreateMeetingCommand;
 import com.example.vibe1.meeting.Meeting;
+import com.example.vibe1.meeting.MeetingAccessService;
+import com.example.vibe1.meeting.MeetingParticipantRepository;
+import com.example.vibe1.meeting.MeetingRepository;
 import com.example.vibe1.meeting.MeetingService;
 import com.example.vibe1.meeting.MeetingTimeZone;
 import com.example.vibe1.user.Role;
@@ -34,7 +38,26 @@ import lombok.RequiredArgsConstructor;
 public class MeetingController {
 
     private final MeetingService meetingService;
+    private final MeetingAccessService meetingAccessService;
+    private final MeetingRepository meetingRepository;
+    private final MeetingParticipantRepository participantRepository;
     private final UserRepository userRepository;
+
+    @GetMapping
+    public String list(Principal principal, Model model) {
+        model.addAttribute("meetings", meetingAccessService.visibleMeetings(currentUser(principal)));
+        return "meeting/list";
+    }
+
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Long id, Principal principal, Model model) {
+        Meeting meeting = meetingRepository.findDetailById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Rapat tidak ditemukan"));
+        meetingAccessService.assertCanView(currentUser(principal), meeting);
+        model.addAttribute("meeting", meeting);
+        model.addAttribute("participants", participantRepository.findByMeetingId(id));
+        return "meeting/detail";
+    }
 
     @GetMapping("/new")
     @PreAuthorize("hasRole('KETUA_DIVISI')")

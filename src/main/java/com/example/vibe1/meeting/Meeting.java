@@ -1,6 +1,7 @@
 package com.example.vibe1.meeting;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.example.vibe1.common.AuditableEntity;
 import com.example.vibe1.division.Division;
@@ -79,4 +80,12 @@ public class Meeting extends AuditableEntity {
 
     @Column(name = "calendar_synced_at")
     private Instant calendarSyncedAt;
+
+    public LocalDateTime getStartTimeLocal() {
+        return startTime == null ? null : startTime.atZone(MeetingTimeZone.WIB).toLocalDateTime();
+    }
+
+    public LocalDateTime getEndTimeLocal() {
+        return endTime == null ? null : endTime.atZone(MeetingTimeZone.WIB).toLocalDateTime();
+    }
 }
