@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-create-event-publication-table" author="vibe1">
+        <comment>
+            Schema for spring-modulith-starter-jpa's durable event publication registry
+            (used by @ApplicationModuleListener, e.g. the calendar-sync listener). Hibernate
+            only validates this JPA-mapped entity against the schema, it never creates it --
+            the exact column definitions below were captured verbatim from Hibernate's own
+            schema-generation-to-script output against these dependency versions, not
+            hand-guessed, since column lengths/types are version-sensitive.
+        </comment>
+        <sql>
+            CREATE TABLE event_publication (
+                id UUID NOT NULL,
+                listener_id VARCHAR(255) NOT NULL,
+                event_type VARCHAR(255) NOT NULL,
+                serialized_event VARCHAR(255) NOT NULL,
+                publication_date DATETIME(6) NOT NULL,
+                completion_date DATETIME(6),
+                status ENUM('COMPLETED','FAILED','PROCESSING','PUBLISHED','RESUBMITTED'),
+                completion_attempts INT NOT NULL,
+                last_resubmission_date DATETIME(6),
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB
+        </sql>
+        <rollback>
+            <dropTable tableName="event_publication"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

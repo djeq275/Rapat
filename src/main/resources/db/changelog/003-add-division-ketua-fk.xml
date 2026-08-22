@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="003-add-division-ketua-fk" author="vibe1">
+        <comment>One user leads at most one division, and MariaDB's unique index allows multiple NULLs so leaderless divisions are still fine.</comment>
+        <addUniqueConstraint tableName="division" columnNames="ketua_divisi_user_id"
+                              constraintName="uk_division_ketua_divisi_user_id"/>
+        <addForeignKeyConstraint baseTableName="division" baseColumnNames="ketua_divisi_user_id"
+                                  constraintName="fk_division_ketua"
+                                  referencedTableName="app_user" referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

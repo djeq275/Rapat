@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Beranda')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container">
+    <h1 class="h4">Selamat datang, <span th:text="${principal.fullName}"></span></h1>
+    <p class="text-muted" th:text="${principal.role}"></p>
+    <p>Fitur penjadwalan &amp; notulensi rapat akan tampil di sini.</p>
+</main>
+</body>
+</html>

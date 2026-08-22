@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-seed-bootstrap-admin" author="vibe1">
+        <comment>
+            Only way to bootstrap the app: there is no self-registration, so the very first
+            login has to be this seeded account. Password hash below is bcrypt("ChangeMe123!").
+            MUST be logged in and changed immediately after first deployment.
+        </comment>
+        <insert tableName="app_user">
+            <column name="email" value="admin@company.local"/>
+            <column name="password_hash" value="$2b$10$9I0SaTT2ORQu1SeuBZopi.8V785w8HPblhcewEJn6LQj4pcKk7/82"/>
+            <column name="full_name" value="Administrator"/>
+            <column name="role" value="ADMIN"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
