@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Buat Rapat')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 600px;">
+    <h1 class="h4 mb-3">Buat Rapat</h1>
+    <form method="post" th:object="${form}" th:action="@{/meetings}">
+
+        <div class="alert alert-danger" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+
+        <div class="mb-3">
+            <label class="form-label" for="title">Judul Rapat</label>
+            <input class="form-control" id="title" th:field="*{title}" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="description">Keterangan</label>
+            <textarea class="form-control" id="description" th:field="*{description}"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="materialLink">Link Google Doc Materi</label>
+            <input class="form-control" id="materialLink" th:field="*{materialLink}"/>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label" for="startTime">Waktu Mulai</label>
+                <input class="form-control" id="startTime" type="datetime-local" th:field="*{startTime}" required="required"/>
+            </div>
+            <div class="col">
+                <label class="form-label" for="endTime">Waktu Selesai</label>
+                <input class="form-control" id="endTime" type="datetime-local" th:field="*{endTime}" required="required"/>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Peserta (Karyawan divisi Anda)</label>
+            <div class="form-check" th:each="c : ${candidates}">
+                <input class="form-check-input" type="checkbox" name="participantUserIds"
+                       th:id="${'participant-' + c.id}" th:value="${c.id}"/>
+                <label class="form-check-label" th:for="${'participant-' + c.id}" th:text="${c.fullName}"></label>
+            </div>
+            <div class="form-text" th:if="${#lists.isEmpty(candidates)}">Belum ada karyawan di divisi Anda.</div>
+        </div>
+        <p class="text-muted small">Direktur otomatis diundang ke rapat ini.</p>
+
+        <button class="btn btn-primary" type="submit">Buat Rapat</button>
+        <a class="btn btn-link" th:href="@{/meetings}">Batal</a>
+    </form>
+</main>
+</body>
+</html>

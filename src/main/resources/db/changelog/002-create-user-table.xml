@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="002-create-user-table" author="vibe1">
+        <createTable tableName="app_user">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_app_user_email"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)"/>
+            <column name="full_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="division_id" type="BIGINT"/>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="app_user" baseColumnNames="division_id"
+                                  constraintName="fk_app_user_division"
+                                  referencedTableName="division" referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="002b-check-role-requires-division" author="vibe1">
+        <comment>KETUA_DIVISI/KARYAWAN must belong to a division; ADMIN/DIREKTUR are not division-scoped.</comment>
+        <sql>ALTER TABLE app_user ADD CONSTRAINT chk_app_user_role_division
+            CHECK (role NOT IN ('KETUA_DIVISI', 'KARYAWAN') OR division_id IS NOT NULL)</sql>
+        <rollback>
+            <sql>ALTER TABLE app_user DROP CONSTRAINT chk_app_user_role_division</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

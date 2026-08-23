@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Form Divisi')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 500px;">
+    <h1 class="h4 mb-3">Form Divisi</h1>
+    <form method="post" th:object="${form}"
+          th:action="${divisionId} != null ? @{/admin/divisions/{id}(id=${divisionId})} : @{/admin/divisions}">
+        <div class="mb-3">
+            <label class="form-label" for="name">Nama Divisi</label>
+            <input class="form-control" id="name" th:field="*{name}"/>
+            <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+        <button class="btn btn-primary" type="submit">Simpan</button>
+        <a class="btn btn-link" th:href="@{/admin/divisions}">Batal</a>
+    </form>
+</main>
+</body>
+</html>
