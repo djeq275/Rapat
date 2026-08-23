@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="db/changelog/001-create-division-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/002-create-user-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/003-add-division-ketua-fk.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/004-seed-bootstrap-admin.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/005-create-event-publication-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/006-create-meeting-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/007-create-meeting-notetaker-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/008-create-google-authorized-client-table.xml" relativeToChangelogFile="false"/>
+
+</databaseChangeLog>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body>
+<main class="container" style="max-width: 400px; margin-top: 4rem;">
+    <h1 class="h4 mb-4">Login</h1>
+
+    <div class="alert alert-danger" th:if="${param.error != null}">
+        Email/password salah, atau akun Google ini tidak terdaftar. Hubungi Admin jika akun Anda seharusnya ada.
+    </div>
+    <div class="alert alert-success" th:if="${param.logout != null}">
+        Anda telah logout.
+    </div>
+
+    <form method="post" th:action="@{/login}">
+        <div class="mb-3">
+            <label class="form-label" for="username">Email</label>
+            <input class="form-control" id="username" name="username" type="email" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" required="required"/>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Login</button>
+    </form>
+
+    <hr/>
+
+    <a class="btn btn-outline-danger w-100" th:href="@{/oauth2/authorization/google-login}">Login dengan Google</a>
+</main>
+</body>
+</html>

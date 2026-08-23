@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detail Rapat')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 700px;">
+    <h1 class="h4" th:text="${meeting.title}"></h1>
+    <p class="text-muted">
+        <span th:text="${meeting.division.name}"></span>
+        &middot; Organizer: <span th:text="${meeting.organizer.fullName}"></span>
+    </p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Waktu</dt>
+        <dd class="col-sm-9">
+            <span th:text="${#temporals.format(meeting.startTimeLocal, 'dd MMM yyyy HH:mm')}"></span>
+            &ndash;
+            <span th:text="${#temporals.format(meeting.endTimeLocal, 'dd MMM yyyy HH:mm')}"></span>
+        </dd>
+
+        <dt class="col-sm-3">Keterangan</dt>
+        <dd class="col-sm-9" th:text="${meeting.description} ?: '-'"></dd>
+
+        <dt class="col-sm-3">Link Materi</dt>
+        <dd class="col-sm-9">
+            <a th:if="${meeting.materialLink}" th:href="${meeting.materialLink}" th:text="${meeting.materialLink}" target="_blank"></a>
+            <span th:unless="${meeting.materialLink}">-</span>
+        </dd>
+
+        <dt class="col-sm-3">Status Sync Kalender</dt>
+        <dd class="col-sm-9">
+            <span th:text="${meeting.calendarSyncStatus}"></span>
+            <span class="text-danger small" th:if="${meeting.calendarSyncError}" th:text="${meeting.calendarSyncError}"></span>
+            <form th:if="${canRetrySync and meeting.calendarSyncStatus.name() == 'FAILED'}"
+                  method="post" th:action="@{/meetings/{id}/retry-sync(id=${meeting.id})}" class="d-inline">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Retry Sync</button>
+            </form>
+        </dd>
+
+        <dt class="col-sm-3">Peserta</dt>
+        <dd class="col-sm-9">
+            <ul class="list-unstyled mb-0">
+                <li th:each="p : ${participants}" th:text="${p.user.fullName}"></li>
+            </ul>
+        </dd>
+
+        <dt class="col-sm-3">Notulis</dt>
+        <dd class="col-sm-9">
+            <ul class="list-unstyled mb-2">
+                <li th:each="n : ${notetakers}">
+                    <span th:text="${n.user.fullName}"></span>
+                    <form th:if="${canManageNotetakers}" method="post" class="d-inline"
+                          th:action="@{/meetings/{id}/notetakers/{userId}/revoke(id=${meeting.id},userId=${n.user.id})}">
+                        <button class="btn btn-sm btn-link text-danger p-0" type="submit">(cabut)</button>
+                    </form>
+                </li>
+                <li th:if="${#lists.isEmpty(notetakers)}" class="text-muted">Belum ada notulis yang ditunjuk.</li>
+            </ul>
+            <form th:if="${canManageNotetakers and !#lists.isEmpty(notetakerCandidates)}"
+                  method="post" th:action="@{/meetings/{id}/notetakers(id=${meeting.id})}" class="d-flex gap-2">
+                <select class="form-select form-select-sm" name="userId" style="max-width: 250px;">
+                    <option th:each="c : ${notetakerCandidates}" th:value="${c.id}" th:text="${c.fullName}"></option>
+                </select>
+                <button class="btn btn-sm btn-secondary" type="submit">Tunjuk sebagai Notulis</button>
+            </form>
+        </dd>
+
+        <dt class="col-sm-3">Notulensi</dt>
+        <dd class="col-sm-9">
+            <div th:unless="${canWriteNotulensi}">
+                <a th:if="${meeting.notulensiLink}" th:href="${meeting.notulensiLink}" th:text="${meeting.notulensiLink}" target="_blank"></a>
+                <p th:if="${meeting.notulensiText}" th:text="${meeting.notulensiText}"></p>
+                <span th:if="${meeting.notulensiLink == null and meeting.notulensiText == null}">Belum ada notulensi.</span>
+            </div>
+            <form th:if="${canWriteNotulensi}" method="post" th:object="${notulensiForm}"
+                  th:action="@{/meetings/{id}/notulensi(id=${meeting.id})}">
+                <div class="mb-2">
+                    <label class="form-label">Link Google Doc Notulensi</label>
+                    <input class="form-control" th:field="*{notulensiLink}" th:value="${meeting.notulensiLink}"/>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Ringkasan Notulensi</label>
+                    <textarea class="form-control" th:field="*{notulensiText}" th:text="${meeting.notulensiText}"></textarea>
+                </div>
+                <button class="btn btn-sm btn-primary" type="submit">Simpan Notulensi</button>
+            </form>
+        </dd>
+    </dl>
+
+    <a th:href="@{/meetings}">&larr; Kembali ke daftar rapat</a>
+</main>
+</body>
+</html>

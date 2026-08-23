@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Rapat')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container">
+    <h1 class="h4 mb-3">Daftar Rapat</h1>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Judul</th>
+            <th>Divisi</th>
+            <th>Waktu Mulai</th>
+            <th>Status Sync</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="meeting : ${meetings}">
+            <td th:text="${meeting.title}"></td>
+            <td th:text="${meeting.division.name}"></td>
+            <td th:text="${#temporals.format(meeting.startTimeLocal, 'dd MMM yyyy HH:mm')}"></td>
+            <td th:text="${meeting.calendarSyncStatus}"></td>
+            <td>
+                <a th:href="@{/meetings/{id}(id=${meeting.id})}">Detail</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="text-muted small" th:if="${#lists.isEmpty(meetings)}">Belum ada rapat.</p>
+</main>
+</body>
+</html>
