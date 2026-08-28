@@ -55,7 +55,7 @@ public class UserAdminController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        User user = userService.findById(id);
+        User user = userService.findByIdWithDivision(id);
         UserForm form = new UserForm();
         form.setEmail(user.getEmail());
         form.setFullName(user.getFullName());

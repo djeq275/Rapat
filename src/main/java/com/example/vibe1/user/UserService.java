@@ -23,11 +23,17 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public List<User> findAll() {
-        return userRepository.findAll();
+        return userRepository.findAllWithDivision();
     }
 
     public User findById(Long id) {
         return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pengguna tidak ditemukan"));
+    }
+
+    /** For rendering outside a transaction (e.g. the edit-form controller) -- see UserRepository.findByIdWithDivision. */
+    public User findByIdWithDivision(Long id) {
+        return userRepository.findByIdWithDivision(id)
                 .orElseThrow(() -> new IllegalArgumentException("Pengguna tidak ditemukan"));
     }
 
