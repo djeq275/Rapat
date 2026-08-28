@@ -8,3 +8,31 @@ services:
       - 'MARIADB_USER=${DB_USERNAME}'
     ports:
       - '${DB_PORT}:3306'
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  meeting:
+    image: 'meeting:1'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      - 'SPRING_PROFILES_ACTIVE=docker'
+      # Internal compose network: reach mariadb by service name on its
+      # container-internal port, not the ${DB_PORT} host mapping above.
+      - 'DB_HOST=mariadb'
+      - 'DB_PORT=3306'
+      - 'DB_NAME=${DB_NAME}'
+      - 'DB_USERNAME=${DB_USERNAME}'
+      - 'DB_PASSWORD=${DB_PASSWORD}'
+      # `:-` (not just `-`) so a *blank* value in .env also falls through to
+      # the dummy default -- Spring's own ${X:default} placeholder only
+      # applies when the env var is absent, not when it's set-but-empty.
+      - 'GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-dummy-client-id}'
+      - 'GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-dummy-client-secret}'
+      - 'GOOGLE_TOKEN_ENCRYPTION_KEY=${GOOGLE_TOKEN_ENCRYPTION_KEY}'
+    ports:
+      - '8080:8080'
