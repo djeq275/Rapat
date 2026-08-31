@@ -31,7 +31,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.modulith:spring-modulith-observability-api'
 	implementation 'org.springframework.modulith:spring-modulith-starter-core'
 	implementation 'org.springframework.modulith:spring-modulith-starter-jpa'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
@@ -42,7 +41,6 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 	runtimeOnly 'org.springframework.modulith:spring-modulith-actuator'
-	runtimeOnly 'org.springframework.modulith:spring-modulith-observability-core'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
@@ -71,6 +69,15 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// Builds the local `meeting:1` image via Cloud Native Buildpacks (Paketo) --
+// no Dockerfile needed, this packages the boot jar directly. BP_JVM_VERSION
+// is pinned explicitly since Paketo only makes Java 25 the default from
+// September 2026 onward.
+tasks.named('bootBuildImage') {
+	imageName = 'meeting:1'
+	environment = ['BP_JVM_VERSION': '25']
+}
+
 // Loads .env into the bootRun JVM's process environment only -- so
 // application.properties' ${GOOGLE_OAUTH_CLIENT_ID}-style placeholders and
 // docker compose's own ${DB_...} substitution (see compose.yaml) both resolve
@@ -83,7 +90,12 @@ tasks.named('bootRun') {
 			line = line.trim()
 			if (line && !line.startsWith('#') && line.contains('=')) {
 				def (key, value) = line.split('=', 2)
-				environment key, value
+				// Skip blank values so application.properties' own ${KEY:default}
+				// placeholder can apply -- Spring only honors that default when the
+				// env var is absent, not when it's present-but-empty.
+				if (value) {
+					environment key, value
+				}
 			}
 		}
 	}

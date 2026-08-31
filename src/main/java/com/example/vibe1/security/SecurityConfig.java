@@ -2,6 +2,7 @@ package com.example.vibe1.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -45,6 +46,11 @@ public class SecurityConfig {
                         .failureUrl("/login?error=oauth2")
                         .userInfoEndpoint(userInfo -> userInfo.oidcUserService(googleOidcUserService))
                         .defaultSuccessUrl("/", false))
+                // Handles the "google-calendar" registration's authorization-code
+                // callback (see its redirect-uri override in application.properties)
+                // as a plain incremental-scope grant, not a login attempt --
+                // oauth2Login() alone only processes /login/oauth2/code/**.
+                .oauth2Client(Customizer.withDefaults())
                 .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
                 .exceptionHandling(exceptions -> exceptions.accessDeniedPage("/error/403"));
         return http.build();
