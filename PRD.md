@@ -82,6 +82,13 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - AC: Satu grup Telegram yang sama boleh menjadi favorit lebih dari satu divisi.
 - AC: Perubahan daftar favorit divisi hanya memengaruhi default pilihan di form rapat baru berikutnya, tidak mengubah rapat yang sudah dibuat sebelumnya.
 
+**US-9 — Admin mengelola konfigurasi koneksi Keycloak**
+Sebagai Admin, saya ingin mengatur koneksi ke Keycloak server (URL server/realm, client ID, client secret) lewat UI aplikasi, supaya saya bisa mengubah konfigurasi tanpa akses ke server/file `.env`.
+- AC: Admin bisa mengisi/mengubah issuer/URL server Keycloak, realm, client ID, dan client secret lewat halaman pengaturan.
+- AC: Client secret tidak pernah ditampilkan ulang setelah disimpan (pola sama seperti pengaturan token bot Telegram); mengosongkan field client secret saat edit berarti tidak mengubah secret yang sudah tersimpan.
+- AC: Perubahan konfigurasi berlaku efektif pada percobaan login berikutnya, tanpa perlu restart aplikasi.
+- AC: Tombol "Login dengan Keycloak" di halaman login hanya muncul jika Admin sudah pernah menyimpan konfigurasi; sebelum itu, opsi ini disembunyikan (bukan ditampilkan lalu gagal saat diklik).
+
 ### Non-Goals
 
 - Tidak membangun aplikasi mobile native (web responsive melalui Thymeleaf sudah cukup untuk rilis ini).
@@ -107,13 +114,14 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - **Alur notifikasi Telegram**: berjalan paralel dengan alur sync Google Calendar, dipicu oleh event yang sama saat rapat tersimpan → untuk setiap grup Telegram yang dipilih, aplikasi mengirim pesan undangan lewat Telegram Bot API → status kirim per grup dicatat (sukses/gagal); kegagalan tidak membatalkan pembuatan rapat maupun sync Calendar-nya.
 - **Alur notulensi**: Ketua Divisi/Admin menunjuk notulis untuk rapat tertentu → hak edit tersimpan sebagai relasi (mis. tabel penunjukan notulis per-rapat) → notulis/Ketua Divisi mengisi link Google Doc + ringkasan notulensi pada detail rapat → peserta rapat (sesuai aturan visibilitas divisi) dapat membaca hasilnya.
 - **Data grup Telegram**: entitas grup Telegram (nama, Chat ID, status aktif) dikelola Admin; relasi favorit menghubungkan satu divisi ke banyak grup (many-to-many) sebagai default pilihan; relasi terpisah mencatat grup mana saja yang benar-benar dipilih untuk satu rapat tertentu (independen dari daftar favorit, karena favorit bisa berubah setelah rapat dibuat).
-- **Alur login Keycloak (SSO)**: pengguna memilih "Login dengan Keycloak" → diarahkan ke server Keycloak kantor untuk autentikasi → setelah sukses, aplikasi mencari `User` lokal berdasarkan email dari Keycloak; jika belum ada, aplikasi otomatis membuat `User` baru dengan role `KARYAWAN` dan divisi kosong (auto-provisioning — satu-satunya jalur login yang boleh membuat akun otomatis); jika sudah ada, akun yang sama langsung dipakai. Admin melengkapi divisi & role user tersebut lewat halaman kelola pengguna yang sudah ada. Konfigurasi koneksi ke server Keycloak (issuer, client id/secret) dikelola Admin lewat UI terpisah — lihat rencana pada issue pengelolaan konfigurasi Keycloak.
+- **Alur login Keycloak (SSO)**: pengguna memilih "Login dengan Keycloak" → diarahkan ke server Keycloak kantor untuk autentikasi → setelah sukses, aplikasi mencari `User` lokal berdasarkan email dari Keycloak; jika belum ada, aplikasi otomatis membuat `User` baru dengan role `KARYAWAN` dan divisi kosong (auto-provisioning — satu-satunya jalur login yang boleh membuat akun otomatis); jika sudah ada, akun yang sama langsung dipakai. Admin melengkapi divisi & role user tersebut lewat halaman kelola pengguna yang sudah ada.
+- **Konfigurasi Keycloak**: disimpan sebagai satu baris config (mirip `TelegramBotConfig`) berisi issuer/URL server, realm, client ID, dan client secret terenkripsi — dikelola Admin lewat UI, bukan `.env` (satu konfigurasi per instalasi aplikasi, tidak mendukung multi-realm/multi-server). Registrasi OAuth2/OIDC untuk `keycloak` dilayani oleh `ClientRegistrationRepository` custom yang membaca config ini dari database dan meng-cache-nya di memory, di-invalidate persis saat Admin menyimpan config baru — supaya perubahan berlaku tanpa restart aplikasi. Registrasi `google-login`/`google-calendar` tetap dari config statis di `application.properties`, tidak berubah.
 
 ### Integration Points
 
 - **Google OAuth2** (Spring Security OAuth2 Client) untuk login akun Google dan memperoleh consent scope Google Calendar.
 - **Google Calendar API** untuk membuat/memperbarui/membatalkan event rapat beserta attendee.
-- **Keycloak (OpenID Connect)** sebagai identity provider tambahan untuk login SSO karyawan, berdampingan dengan Google OAuth2 login dan email/password — satu-satunya jalur login yang melakukan auto-provisioning akun baru (role default Karyawan) saat email belum terdaftar.
+- **Keycloak (OpenID Connect)** sebagai identity provider tambahan untuk login SSO karyawan, berdampingan dengan Google OAuth2 login dan email/password — satu-satunya jalur login yang melakukan auto-provisioning akun baru (role default Karyawan) saat email belum terdaftar. Koneksi ke server Keycloak dikonfigurasi Admin lewat UI aplikasi (bukan `.env`), lihat Architecture Overview.
 - **Telegram Bot API** untuk mengirim pesan undangan rapat ke grup Telegram yang dipilih. Bot harus sudah ditambahkan sebagai member/admin di grup tujuan sebelum bisa mengirim pesan — prasyarat operasional manual, bukan sesuatu yang bisa diotomatisasi dari sisi aplikasi.
 - **MariaDB** melalui **Spring Data JPA**, skema dikelola dengan **Liquibase** (changelog per fitur, tidak ada perubahan skema manual di luar migration).
 
@@ -125,6 +133,7 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - Kredensial database, OAuth client, dan token bot Telegram disimpan sebagai environment variable (`.env`, tidak masuk version control), bukan hardcoded di source atau file scope.
 - Data yang disimpan aplikasi terbatas pada metadata rapat (judul, waktu, peserta, link, ringkasan notulensi) — dokumen Google Doc sendiri tetap berada di Google Workspace perusahaan, tunduk pada kontrol akses Google Workspace yang sudah ada.
 - **Auto-provisioning akun khusus login Keycloak**: satu-satunya pengecualian terhadap kebijakan "tidak ada self-registration" di aplikasi ini — login Google dan email/password tetap mengharuskan akun sudah dibuat manual oleh Admin lebih dulu, tidak berubah oleh hadirnya Keycloak SSO.
+- **Client secret Keycloak** disimpan terenkripsi di database dengan key enkripsi terpisah dari key Google/Telegram (supaya kompromi satu key tidak membuka secret lain, pola sama seperti `AesGcmStringConverter` yang sudah ada) — tidak pernah di-log atau ditampilkan ulang di UI.
 
 ## 4. Risks & Roadmap
 
@@ -143,3 +152,4 @@ Rilis awal dilakukan **sekaligus dengan scope penuh** (US-1 s/d US-5) — tidak 
 - **Rate limit Telegram Bot API**: pengiriman ke banyak grup sekaligus (mis. rapat dengan banyak grup terpilih, atau banyak rapat dibuat bersamaan) berisiko tertunda/gagal jika kena limit.
 - **Kegagalan kirim Telegram tidak boleh menggagalkan pembuatan rapat**: harus mengikuti pola yang sama seperti status `FAILED` pada sync Google Calendar (lihat US-2) — gagal kirim ke satu grup tidak boleh membatalkan rapat atau sync Calendar-nya.
 - **Akun Karyawan hasil auto-provisioning Keycloak belum punya divisi**: sampai Admin menugaskan divisinya, user tersebut tidak akan melihat rapat apa pun (mengikuti aturan visibilitas per-divisi yang sudah ada) — keterbatasan yang disengaja, bukan bug, tapi perlu dikomunikasikan dengan jelas ke pengguna baru (mis. pesan di halaman beranda) supaya tidak disalahartikan sebagai defect saat rollout.
+- **Registrasi OAuth2/OIDC Spring Security default-nya statis** (dibaca sekali saat startup dari `application.properties`) — supaya konfigurasi Keycloak dari database bisa berlaku tanpa restart, dibutuhkan `ClientRegistrationRepository` custom dengan cache in-memory yang di-invalidate saat Admin menyimpan config baru (lihat Architecture Overview); pola ini sudah punya presedan di `RegistrationRoutingAuthorizedClientRepository` yang ada di codebase untuk kasus serupa (routing token per registration id).
