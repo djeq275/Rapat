@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.vibe1.calendar.CalendarSyncService;
 import com.example.vibe1.meeting.MeetingSyncAuthorizationPort;
-import com.example.vibe1.security.GoogleOidcUserService;
+import com.example.vibe1.security.AppOidcUserService;
 import com.example.vibe1.security.SecurityConfig;
 import com.example.vibe1.user.Role;
 import com.example.vibe1.user.User;
@@ -45,7 +45,7 @@ class CalendarSyncControllerTest {
     @MockitoBean
     UserRepository userRepository;
     @MockitoBean
-    GoogleOidcUserService googleOidcUserService;
+    AppOidcUserService appOidcUserService;
 
     @Autowired
     MockMvc mockMvc;
