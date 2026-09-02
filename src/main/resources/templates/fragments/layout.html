@@ -23,6 +23,7 @@
         <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/divisions">Divisi</a></li>
         <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/users">Pengguna</a></li>
         <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/telegram-groups">Grup Telegram</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/keycloak/settings">Konfigurasi Keycloak</a></li>
     </ul>
     <form class="app-sidebar__logout" method="post" th:action="@{/logout}">
         <button class="app-sidebar__logout-btn" type="submit">Logout</button>
