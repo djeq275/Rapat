@@ -29,10 +29,13 @@ Aplikasi internal berbasis Spring Boot (MVC + Thymeleaf) yang memusatkan penjadw
 ### User Stories & Acceptance Criteria
 
 **US-1 — Login**
-Sebagai pengguna, saya ingin login menggunakan email/password atau akun Google, supaya saya bisa masuk dengan cara yang paling nyaman.
+Sebagai pengguna, saya ingin login menggunakan email/password, akun Google, atau Single Sign-On (SSO) Keycloak kantor, supaya saya bisa masuk dengan cara yang paling nyaman/sesuai kebijakan kantor.
 - AC: Login berhasil dengan kombinasi email+password yang valid.
 - AC: Login berhasil via OAuth Google, dan akun Google yang baru pertama kali login otomatis tertaut ke akun pengguna yang sudah ada berdasarkan email.
 - AC: Login akun Google adalah prasyarat untuk fitur sync Google Calendar (izin/scope calendar diminta saat itu).
+- AC: Login berhasil via SSO Keycloak kantor. Jika email dari Keycloak **belum pernah terdaftar**, sistem otomatis membuat akun baru (*auto-provisioning*) dengan role default **Karyawan** dan divisi masih kosong — berbeda dari login Google/email-password yang mengharuskan akun sudah dibuat lebih dulu oleh Admin (lihat Security & Privacy untuk kenapa ini pengecualian, bukan perubahan kebijakan umum).
+- AC: Percobaan login Keycloak berikutnya dari email yang sama memakai akun yang sudah dibuat sebelumnya (match by email, pola sama seperti akun Google), tidak membuat akun duplikat.
+- AC: Admin melengkapi role & divisi user hasil auto-provisioning Keycloak lewat halaman kelola pengguna yang **sudah ada** — bukan capability baru yang perlu dibangun terpisah.
 
 **US-2 — Membuat jadwal rapat (Ketua Divisi)**
 Sebagai Ketua Divisi, saya ingin membuat jadwal rapat dengan judul, keterangan, link materi, waktu mulai/selesai, dan peserta, supaya rapat tercatat dan seluruh peserta diundang secara resmi.
@@ -90,6 +93,7 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - Notifikasi Telegram bersifat tambahan/paralel terhadap sync Google Calendar — bukan pengganti, dan tidak menggantikan undangan Calendar yang sudah ada.
 - Tidak ada percakapan dua arah lewat bot Telegram (bot hanya mengirim pesan satu arah, tidak membaca/merespons pesan dari grup).
 - Tidak mendukung platform chat lain (WhatsApp, Slack, dll.) di luar Telegram pada rilis ini.
+- Login SSO Keycloak **tidak menghapus atau menggantikan** login Google maupun email/password pada rilis ini — ketiganya berdampingan; auto-provisioning akun hanya berlaku untuk jalur Keycloak.
 
 ## 3. Technical Specifications
 
@@ -103,11 +107,13 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - **Alur notifikasi Telegram**: berjalan paralel dengan alur sync Google Calendar, dipicu oleh event yang sama saat rapat tersimpan → untuk setiap grup Telegram yang dipilih, aplikasi mengirim pesan undangan lewat Telegram Bot API → status kirim per grup dicatat (sukses/gagal); kegagalan tidak membatalkan pembuatan rapat maupun sync Calendar-nya.
 - **Alur notulensi**: Ketua Divisi/Admin menunjuk notulis untuk rapat tertentu → hak edit tersimpan sebagai relasi (mis. tabel penunjukan notulis per-rapat) → notulis/Ketua Divisi mengisi link Google Doc + ringkasan notulensi pada detail rapat → peserta rapat (sesuai aturan visibilitas divisi) dapat membaca hasilnya.
 - **Data grup Telegram**: entitas grup Telegram (nama, Chat ID, status aktif) dikelola Admin; relasi favorit menghubungkan satu divisi ke banyak grup (many-to-many) sebagai default pilihan; relasi terpisah mencatat grup mana saja yang benar-benar dipilih untuk satu rapat tertentu (independen dari daftar favorit, karena favorit bisa berubah setelah rapat dibuat).
+- **Alur login Keycloak (SSO)**: pengguna memilih "Login dengan Keycloak" → diarahkan ke server Keycloak kantor untuk autentikasi → setelah sukses, aplikasi mencari `User` lokal berdasarkan email dari Keycloak; jika belum ada, aplikasi otomatis membuat `User` baru dengan role `KARYAWAN` dan divisi kosong (auto-provisioning — satu-satunya jalur login yang boleh membuat akun otomatis); jika sudah ada, akun yang sama langsung dipakai. Admin melengkapi divisi & role user tersebut lewat halaman kelola pengguna yang sudah ada. Konfigurasi koneksi ke server Keycloak (issuer, client id/secret) dikelola Admin lewat UI terpisah — lihat rencana pada issue pengelolaan konfigurasi Keycloak.
 
 ### Integration Points
 
 - **Google OAuth2** (Spring Security OAuth2 Client) untuk login akun Google dan memperoleh consent scope Google Calendar.
 - **Google Calendar API** untuk membuat/memperbarui/membatalkan event rapat beserta attendee.
+- **Keycloak (OpenID Connect)** sebagai identity provider tambahan untuk login SSO karyawan, berdampingan dengan Google OAuth2 login dan email/password — satu-satunya jalur login yang melakukan auto-provisioning akun baru (role default Karyawan) saat email belum terdaftar.
 - **Telegram Bot API** untuk mengirim pesan undangan rapat ke grup Telegram yang dipilih. Bot harus sudah ditambahkan sebagai member/admin di grup tujuan sebelum bisa mengirim pesan — prasyarat operasional manual, bukan sesuatu yang bisa diotomatisasi dari sisi aplikasi.
 - **MariaDB** melalui **Spring Data JPA**, skema dikelola dengan **Liquibase** (changelog per fitur, tidak ada perubahan skema manual di luar migration).
 
@@ -118,6 +124,7 @@ Sebagai Admin atau Ketua Divisi, saya ingin menandai satu atau lebih grup Telegr
 - **Token OAuth Google** (access/refresh token) disimpan terenkripsi di database, tidak pernah di-log atau ditampilkan di UI.
 - Kredensial database, OAuth client, dan token bot Telegram disimpan sebagai environment variable (`.env`, tidak masuk version control), bukan hardcoded di source atau file scope.
 - Data yang disimpan aplikasi terbatas pada metadata rapat (judul, waktu, peserta, link, ringkasan notulensi) — dokumen Google Doc sendiri tetap berada di Google Workspace perusahaan, tunduk pada kontrol akses Google Workspace yang sudah ada.
+- **Auto-provisioning akun khusus login Keycloak**: satu-satunya pengecualian terhadap kebijakan "tidak ada self-registration" di aplikasi ini — login Google dan email/password tetap mengharuskan akun sudah dibuat manual oleh Admin lebih dulu, tidak berubah oleh hadirnya Keycloak SSO.
 
 ## 4. Risks & Roadmap
 
@@ -135,3 +142,4 @@ Rilis awal dilakukan **sekaligus dengan scope penuh** (US-1 s/d US-5) — tidak 
 - **Prasyarat manual bot Telegram**: bot harus sudah ditambahkan sebagai member/admin di setiap grup tujuan, dan Chat ID grup harus diperoleh & dimasukkan Admin secara manual — tidak ada mekanisme discovery/consent otomatis seperti OAuth Google Calendar, sehingga rawan human error saat setup awal.
 - **Rate limit Telegram Bot API**: pengiriman ke banyak grup sekaligus (mis. rapat dengan banyak grup terpilih, atau banyak rapat dibuat bersamaan) berisiko tertunda/gagal jika kena limit.
 - **Kegagalan kirim Telegram tidak boleh menggagalkan pembuatan rapat**: harus mengikuti pola yang sama seperti status `FAILED` pada sync Google Calendar (lihat US-2) — gagal kirim ke satu grup tidak boleh membatalkan rapat atau sync Calendar-nya.
+- **Akun Karyawan hasil auto-provisioning Keycloak belum punya divisi**: sampai Admin menugaskan divisinya, user tersebut tidak akan melihat rapat apa pun (mengikuti aturan visibilitas per-divisi yang sudah ada) — keterbatasan yang disengaja, bukan bug, tapi perlu dikomunikasikan dengan jelas ke pengguna baru (mis. pesan di halaman beranda) supaya tidak disalahartikan sebagai defect saat rollout.
