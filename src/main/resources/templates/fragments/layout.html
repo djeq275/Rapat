@@ -4,24 +4,46 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title th:text="${title} + ' - Rapat App'">Rapat App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
 </head>
 <body>
 <nav th:fragment="nav" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     class="navbar navbar-expand navbar-dark bg-dark mb-4" sec:authorize="isAuthenticated()">
-    <div class="container">
-        <a class="navbar-brand" href="/">Rapat App</a>
-        <div class="navbar-nav me-auto">
-            <a class="nav-link text-white" href="/meetings">Rapat</a>
-            <a class="nav-link text-white" href="/meetings/new" sec:authorize="hasRole('KETUA_DIVISI')">Buat Rapat</a>
-            <a class="nav-link text-white" href="/admin/divisions" sec:authorize="hasRole('ADMIN')">Divisi</a>
-            <a class="nav-link text-white" href="/admin/users" sec:authorize="hasRole('ADMIN')">Pengguna</a>
-            <a class="nav-link text-white" href="/admin/telegram-groups" sec:authorize="hasRole('ADMIN')">Grup Telegram</a>
-        </div>
-        <form class="d-flex" method="post" th:action="@{/logout}">
-            <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-        </form>
-    </div>
+     class="app-sidebar" sec:authorize="isAuthenticated()">
+    <a class="app-sidebar__brand" href="/">
+        <span class="app-sidebar__brand-mark">R</span>
+        <span>Rapat App</span>
+    </a>
+    <ul class="app-sidebar__nav">
+        <li><a class="app-sidebar__link" href="/meetings">Rapat</a></li>
+        <li sec:authorize="hasRole('KETUA_DIVISI')"><a class="app-sidebar__link" href="/meetings/new">Buat Rapat</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/divisions">Divisi</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/users">Pengguna</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a class="app-sidebar__link" href="/admin/telegram-groups">Grup Telegram</a></li>
+    </ul>
+    <form class="app-sidebar__logout" method="post" th:action="@{/logout}">
+        <button class="app-sidebar__logout-btn" type="submit">Logout</button>
+    </form>
+    <script>
+        (function () {
+            var path = window.location.pathname;
+            var best = null;
+            document.querySelectorAll('.app-sidebar__link').forEach(function (link) {
+                var href = link.getAttribute('href');
+                if (path === href || path.indexOf(href + '/') === 0) {
+                    if (!best || href.length > best.getAttribute('href').length) {
+                        best = link;
+                    }
+                }
+            });
+            if (best) {
+                best.classList.add('is-active');
+            }
+        })();
+    </script>
 </nav>
 </body>
 </html>

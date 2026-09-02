@@ -29,7 +29,8 @@
 
         <dt class="col-sm-3">Status Sync Kalender</dt>
         <dd class="col-sm-9">
-            <span th:text="${meeting.calendarSyncStatus}"></span>
+            <span th:class="'status-chip status-chip--' + ${#strings.toLowerCase(meeting.calendarSyncStatus.name())}"
+                  th:text="${meeting.calendarSyncStatus}"></span>
             <span class="text-danger small" th:if="${meeting.calendarSyncError}" th:text="${meeting.calendarSyncError}"></span>
             <form th:if="${canRetrySync and meeting.calendarSyncStatus.name() == 'FAILED'}"
                   method="post" th:action="@{/meetings/{id}/retry-sync(id=${meeting.id})}" class="d-inline">
@@ -40,10 +41,10 @@
         <dt class="col-sm-3">Notifikasi Telegram</dt>
         <dd class="col-sm-9">
             <ul class="list-unstyled mb-0">
-                <li th:each="n : ${telegramNotifications}">
+                <li th:each="n : ${telegramNotifications}" class="mb-1">
                     <span th:text="${n.telegramGroup.name}"></span>
-                    &mdash;
-                    <span th:text="${n.sendStatus}"></span>
+                    <span th:class="'status-chip status-chip--' + ${#strings.toLowerCase(n.sendStatus.name())}"
+                          th:text="${n.sendStatus}"></span>
                     <span class="text-danger small" th:if="${n.sendError}" th:text="${n.sendError}"></span>
                     <form th:if="${canRetryTelegram and n.sendStatus.name() == 'FAILED'}"
                           method="post" class="d-inline"
