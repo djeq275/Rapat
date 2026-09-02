@@ -1,40 +1,62 @@
 /*
- * "Navy & Amber" theme -- overrides Bootstrap 5.3's component-level CSS
- * variables (e.g. .btn-primary's --bs-btn-bg) rather than fighting its
- * compiled classes, since there's no Sass build step in this project.
+ * "JAGR Board" theme -- reskins the app to match https://kanban.jagr.id/'s
+ * login page (the only page of that app inspectable without an account;
+ * tokens below were read from its computed CSS, not eyeballed). Overrides
+ * Bootstrap 5.3's component-level CSS variables (e.g. .btn-primary's
+ * --bs-btn-bg) rather than fighting its compiled classes, since there's no
+ * Sass build step in this project. Supersedes the earlier "Navy & Amber"
+ * theme (see git history) -- same structural approach (sidebar, status
+ * chips), new palette/type.
  */
 
 :root {
-    --color-navy: #1B2340;
-    --color-bg: #F7F5F0;
+    --color-slate-900: #0F172A;
+    --color-slate-800: #1E293B;
+    --color-slate-700: #334155;
+    --color-bg: #F8FAFC;
     --color-surface: #FFFFFF;
-    --color-text: #23262E;
-    --color-text-muted: #6B7280;
-    --color-amber: #D98E3A;
-    --color-amber-dark: #B9752A;
-    --color-amber-soft: #FBF0DE;
-    --color-danger: #C1553D;
-    --color-danger-soft: #FBEAE6;
-    --color-success: #1F7A43;
-    --color-success-soft: #E6F4EA;
-    --color-border: #E4E0D6;
+    --color-text: #1E293B;
+    --color-text-muted: #64748B;
+    --color-border: #E2E8F0;
+
+    --color-cyan: #0891B2;
+    --color-cyan-dark: #0E7490;
+    --color-cyan-soft: rgba(8, 145, 178, .12);
+
+    --color-sky-50: #F0F9FF;
+    --color-sky-100: #E0F2FE;
+    --color-sky-700: #0369A1;
+
+    --color-success: #047857;
+    --color-success-soft: #ECFDF5;
+    --color-success-border: #A7F3D0;
+
+    --color-danger: #BE123C;
+    --color-danger-soft: #FFF1F2;
+    --color-danger-border: #FFE4E6;
+
+    /* JAGR Board's login hero gradient, used only for auth-style hero
+     * panels -- kept off the persistent sidebar so nav text contrast stays
+     * constant rather than riding a moving gradient. */
+    --gradient-hero: linear-gradient(135deg, #6A11CB 0%, #2575FC 100%);
+
     --sidebar-width: 240px;
 
-    --bs-body-font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --bs-body-bg: var(--color-bg);
     --bs-body-color: var(--color-text);
-    --bs-primary: var(--color-amber);
-    --bs-primary-rgb: 217, 142, 58;
-    --bs-link-color: var(--color-amber-dark);
-    --bs-link-color-rgb: 185, 117, 42;
-    --bs-link-hover-color: var(--color-navy);
-    --bs-link-hover-color-rgb: 27, 35, 64;
-    --bs-border-radius: .5rem;
+    --bs-primary: var(--color-slate-800);
+    --bs-primary-rgb: 30, 41, 59;
+    --bs-link-color: var(--color-cyan-dark);
+    --bs-link-color-rgb: 14, 116, 144;
+    --bs-link-hover-color: var(--color-slate-900);
+    --bs-link-hover-color-rgb: 15, 23, 42;
+    --bs-border-radius: .75rem;
     --bs-border-radius-lg: .75rem;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.01em;
 }
 
@@ -46,7 +68,7 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     bottom: 0;
     width: var(--sidebar-width);
-    background: var(--color-navy);
+    background: var(--color-slate-800);
     display: flex;
     flex-direction: column;
     padding: 1.5rem 1rem;
@@ -59,7 +81,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: .6rem;
     color: #fff;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 1.05rem;
     margin-bottom: 2rem;
     padding: 0 .5rem;
@@ -73,8 +95,8 @@ h1, h2, h3, h4, h5, h6 {
     height: 2rem;
     flex-shrink: 0;
     border-radius: .6rem;
-    background: var(--color-amber);
-    color: var(--color-navy);
+    background: var(--color-cyan);
+    color: #fff;
     font-weight: 800;
 }
 
@@ -106,9 +128,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .app-sidebar__link.is-active {
-    background: rgba(217, 142, 58, .16);
+    background: var(--color-cyan-soft);
     color: #fff;
-    border-left-color: var(--color-amber);
+    border-left-color: var(--color-cyan);
 }
 
 .app-sidebar__logout {
@@ -168,7 +190,7 @@ body:has(> .app-sidebar) {
 
     .app-sidebar__link.is-active {
         border-left-color: transparent;
-        border-bottom-color: var(--color-amber);
+        border-bottom-color: var(--color-cyan);
     }
 
     .app-sidebar__logout {
@@ -194,7 +216,7 @@ body > main {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--bs-border-radius-lg);
-    box-shadow: 0 1px 2px rgba(27, 35, 64, .04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
     padding: 2rem;
     margin-block: 2rem;
 }
@@ -209,15 +231,24 @@ body > main {
 /* ---- Buttons ---- */
 
 .btn-primary {
-    --bs-btn-bg: var(--color-amber);
-    --bs-btn-border-color: var(--color-amber);
-    --bs-btn-hover-bg: var(--color-amber-dark);
-    --bs-btn-hover-border-color: var(--color-amber-dark);
-    --bs-btn-active-bg: var(--color-amber-dark);
-    --bs-btn-active-border-color: var(--color-amber-dark);
-    --bs-btn-color: var(--color-navy);
-    --bs-btn-hover-color: var(--color-navy);
-    --bs-btn-active-color: var(--color-navy);
+    --bs-btn-bg: var(--color-slate-800);
+    --bs-btn-border-color: var(--color-slate-800);
+    --bs-btn-hover-bg: var(--color-slate-700);
+    --bs-btn-hover-border-color: var(--color-slate-700);
+    --bs-btn-active-bg: var(--color-slate-900);
+    --bs-btn-active-border-color: var(--color-slate-900);
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-color: #fff;
+    font-weight: 700;
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--color-text);
+    --bs-btn-border-color: var(--color-border);
+    --bs-btn-hover-bg: var(--color-bg);
+    --bs-btn-hover-border-color: var(--color-text-muted);
+    --bs-btn-hover-color: var(--color-text);
     font-weight: 600;
 }
 
@@ -228,13 +259,15 @@ body > main {
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) > * {
-    --bs-table-accent-bg: rgba(27, 35, 64, .025);
+    --bs-table-accent-bg: rgba(30, 41, 59, .025);
 }
 
 /* ---- Status chips ----
  * Signature element: every place the app tracks a state (Calendar sync,
- * Telegram send) uses the same dot+label chip, so status reads the same
- * way everywhere instead of being a different color per page. */
+ * Telegram send) uses the same dot+label pill, so status reads the same
+ * way everywhere instead of being a different color per page. Pill shape
+ * (uppercase, wide tracking, thin border) mirrors JAGR Board's own badge;
+ * per-status colors stay semantic (green/sky/rose) rather than one color. */
 
 .status-chip {
     display: inline-flex;
@@ -242,12 +275,13 @@ body > main {
     gap: .4rem;
     padding: .3rem .7rem;
     border-radius: 999px;
-    font-size: .75rem;
-    font-weight: 700;
-    letter-spacing: .02em;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .06em;
     text-transform: uppercase;
     background: var(--chip-bg, #EEE);
     color: var(--chip-fg, #333);
+    border: 1px solid var(--chip-border, transparent);
 }
 
 .status-chip::before {
@@ -261,20 +295,131 @@ body > main {
 .status-chip--synced, .status-chip--sent {
     --chip-bg: var(--color-success-soft);
     --chip-fg: var(--color-success);
+    --chip-border: var(--color-success-border);
 }
 
 .status-chip--pending {
-    --chip-bg: var(--color-amber-soft);
-    --chip-fg: var(--color-amber-dark);
+    --chip-bg: var(--color-sky-50);
+    --chip-fg: var(--color-sky-700);
+    --chip-border: var(--color-sky-100);
 }
 
 .status-chip--failed {
     --chip-bg: var(--color-danger-soft);
     --chip-fg: var(--color-danger);
+    --chip-border: var(--color-danger-border);
 }
 
-/* ---- Utility ---- */
+/* ---- Pill badge (small uppercase label, e.g. auth hero) ---- */
 
-.text-mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+.pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+    background: var(--color-sky-50);
+    color: var(--color-sky-700);
+    border: 1px solid var(--color-sky-100);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* ---- Auth shell (login page split panel) ---- */
+
+main.auth-shell {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    min-height: 100vh;
+    align-items: stretch;
+}
+
+.auth-shell__hero {
+    flex: 1 1 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-hero);
+    color: #fff;
+    padding: 3rem;
+}
+
+.auth-shell__hero-inner {
+    max-width: 360px;
+    text-align: center;
+}
+
+.auth-shell__hero-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: .85rem;
+    background: rgba(255, 255, 255, .16);
+    font-weight: 900;
+    font-size: 1.3rem;
+}
+
+.auth-shell__hero h1 {
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin: 1.25rem 0 .5rem;
+    color: #fff;
+}
+
+.auth-shell__hero p {
+    opacity: .88;
+    font-size: .95rem;
+    margin: 0;
+}
+
+.auth-shell__panel {
+    flex: 1 1 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--color-bg);
+}
+
+.auth-shell__card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--bs-border-radius-lg);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    padding: 2.5rem;
+}
+
+.auth-shell__divider {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: 1.25rem 0;
+    color: var(--color-text-muted);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.auth-shell__divider::before, .auth-shell__divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+@media (max-width: 767.98px) {
+    .auth-shell__hero {
+        display: none;
+    }
 }
