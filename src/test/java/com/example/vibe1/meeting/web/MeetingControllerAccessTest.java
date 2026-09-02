@@ -30,9 +30,13 @@ import com.example.vibe1.user.UserRepository;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -88,5 +92,45 @@ class MeetingControllerAccessTest {
 
         mockMvc.perform(get("/meetings/5").with(user("karyawan@company.local").roles("KARYAWAN")))
                 .andExpect(status().isForbidden());
+    }
+
+    /**
+     * The Telegram retry action reuses {@link com.example.vibe1.meeting.MeetingSyncAuthorizationPort},
+     * the same organizer-or-Admin rule as Calendar sync retry -- see {@code CalendarSyncControllerTest}
+     * for the analogous coverage on that endpoint.
+     */
+    @Test
+    void telegramRetryDeniedForNonOrganizerSurfacesAs403AndNeverRetries() throws Exception {
+        User otherKetua = new User();
+        otherKetua.setEmail("ketua-lain@company.local");
+        otherKetua.setRole(Role.KETUA_DIVISI);
+
+        when(userRepository.findByEmailIgnoreCase("ketua-lain@company.local")).thenReturn(Optional.of(otherKetua));
+        doThrow(new AccessDeniedException("Anda tidak berhak menjalankan ulang sync rapat ini"))
+                .when(meetingService).assertCanRetrySync(eq(otherKetua), eq(9L));
+
+        mockMvc.perform(post("/meetings/9/telegram-groups/3/retry")
+                        .with(user("ketua-lain@company.local").roles("KETUA_DIVISI"))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(meetingTelegramNotificationService, never()).retry(any(), any());
+    }
+
+    @Test
+    void telegramRetryAllowedForOrganizerRedirectsAndRetries() throws Exception {
+        User organizer = new User();
+        organizer.setEmail("ketua@company.local");
+        organizer.setRole(Role.KETUA_DIVISI);
+
+        when(userRepository.findByEmailIgnoreCase("ketua@company.local")).thenReturn(Optional.of(organizer));
+
+        mockMvc.perform(post("/meetings/9/telegram-groups/3/retry")
+                        .with(user("ketua@company.local").roles("KETUA_DIVISI"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        verify(meetingService).assertCanRetrySync(organizer, 9L);
+        verify(meetingTelegramNotificationService).retry(9L, 3L);
     }
 }
