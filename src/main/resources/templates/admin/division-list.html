@@ -22,6 +22,8 @@
             <td th:text="${division.ketuaDivisiUserId} ?: '-'"></td>
             <td>
                 <a th:href="@{/admin/divisions/{id}/edit(id=${division.id})}">Edit</a>
+                &middot;
+                <a th:href="@{/admin/divisions/{id}/telegram-groups(id=${division.id})}">Grup Telegram</a>
             </td>
         </tr>
         </tbody>

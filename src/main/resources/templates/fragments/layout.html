@@ -16,6 +16,7 @@
             <a class="nav-link text-white" href="/meetings/new" sec:authorize="hasRole('KETUA_DIVISI')">Buat Rapat</a>
             <a class="nav-link text-white" href="/admin/divisions" sec:authorize="hasRole('ADMIN')">Divisi</a>
             <a class="nav-link text-white" href="/admin/users" sec:authorize="hasRole('ADMIN')">Pengguna</a>
+            <a class="nav-link text-white" href="/admin/telegram-groups" sec:authorize="hasRole('ADMIN')">Grup Telegram</a>
         </div>
         <form class="d-flex" method="post" th:action="@{/logout}">
             <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
