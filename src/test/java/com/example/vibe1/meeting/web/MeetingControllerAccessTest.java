@@ -20,6 +20,9 @@ import com.example.vibe1.meeting.NotetakerService;
 import com.example.vibe1.meeting.NotulensiAccessService;
 import com.example.vibe1.security.GoogleOidcUserService;
 import com.example.vibe1.security.SecurityConfig;
+import com.example.vibe1.telegram.DivisionTelegramGroupService;
+import com.example.vibe1.telegram.MeetingTelegramNotificationService;
+import com.example.vibe1.telegram.TelegramGroupService;
 import com.example.vibe1.user.Role;
 import com.example.vibe1.user.User;
 import com.example.vibe1.user.UserRepository;
@@ -57,6 +60,12 @@ class MeetingControllerAccessTest {
     UserRepository userRepository;
     @MockitoBean
     GoogleOidcUserService googleOidcUserService;
+    @MockitoBean
+    TelegramGroupService telegramGroupService;
+    @MockitoBean
+    DivisionTelegramGroupService divisionTelegramGroupService;
+    @MockitoBean
+    MeetingTelegramNotificationService meetingTelegramNotificationService;
 
     @Autowired
     MockMvc mockMvc;

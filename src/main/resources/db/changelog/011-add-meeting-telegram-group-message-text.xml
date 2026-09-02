@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="011-add-meeting-telegram-group-message-text" author="vibe1">
+        <comment>
+            Message text is composed once by meeting.MeetingService (the only
+            module with the meeting's content) and stored here for reuse on
+            retry -- the telegram module can never depend back on meeting to
+            recompose it.
+        </comment>
+        <addColumn tableName="meeting_telegram_group">
+            <column name="message_text" type="LONGTEXT"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

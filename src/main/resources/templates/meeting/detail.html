@@ -37,6 +37,24 @@
             </form>
         </dd>
 
+        <dt class="col-sm-3">Notifikasi Telegram</dt>
+        <dd class="col-sm-9">
+            <ul class="list-unstyled mb-0">
+                <li th:each="n : ${telegramNotifications}">
+                    <span th:text="${n.telegramGroup.name}"></span>
+                    &mdash;
+                    <span th:text="${n.sendStatus}"></span>
+                    <span class="text-danger small" th:if="${n.sendError}" th:text="${n.sendError}"></span>
+                    <form th:if="${canRetryTelegram and n.sendStatus.name() == 'FAILED'}"
+                          method="post" class="d-inline"
+                          th:action="@{/meetings/{id}/telegram-groups/{groupId}/retry(id=${meeting.id},groupId=${n.telegramGroup.id})}">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Retry</button>
+                    </form>
+                </li>
+                <li th:if="${#lists.isEmpty(telegramNotifications)}" class="text-muted">Tidak ada grup Telegram dipilih untuk rapat ini.</li>
+            </ul>
+        </dd>
+
         <dt class="col-sm-3">Peserta</dt>
         <dd class="col-sm-9">
             <ul class="list-unstyled mb-0">
