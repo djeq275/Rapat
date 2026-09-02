@@ -1,0 +1,280 @@
+/*
+ * "Navy & Amber" theme -- overrides Bootstrap 5.3's component-level CSS
+ * variables (e.g. .btn-primary's --bs-btn-bg) rather than fighting its
+ * compiled classes, since there's no Sass build step in this project.
+ */
+
+:root {
+    --color-navy: #1B2340;
+    --color-bg: #F7F5F0;
+    --color-surface: #FFFFFF;
+    --color-text: #23262E;
+    --color-text-muted: #6B7280;
+    --color-amber: #D98E3A;
+    --color-amber-dark: #B9752A;
+    --color-amber-soft: #FBF0DE;
+    --color-danger: #C1553D;
+    --color-danger-soft: #FBEAE6;
+    --color-success: #1F7A43;
+    --color-success-soft: #E6F4EA;
+    --color-border: #E4E0D6;
+    --sidebar-width: 240px;
+
+    --bs-body-font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --bs-body-bg: var(--color-bg);
+    --bs-body-color: var(--color-text);
+    --bs-primary: var(--color-amber);
+    --bs-primary-rgb: 217, 142, 58;
+    --bs-link-color: var(--color-amber-dark);
+    --bs-link-color-rgb: 185, 117, 42;
+    --bs-link-hover-color: var(--color-navy);
+    --bs-link-hover-color-rgb: 27, 35, 64;
+    --bs-border-radius: .5rem;
+    --bs-border-radius-lg: .75rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* ---- Sidebar ---- */
+
+.app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--color-navy);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    z-index: 1030;
+}
+
+.app-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    padding: 0 .5rem;
+}
+
+.app-sidebar__brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: .6rem;
+    background: var(--color-amber);
+    color: var(--color-navy);
+    font-weight: 800;
+}
+
+.app-sidebar__nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    flex: 1;
+}
+
+.app-sidebar__link {
+    display: block;
+    padding: .6rem .75rem;
+    border-radius: .5rem;
+    color: rgba(255, 255, 255, .72);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: .92rem;
+    border-left: 3px solid transparent;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.app-sidebar__link:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+.app-sidebar__link.is-active {
+    background: rgba(217, 142, 58, .16);
+    color: #fff;
+    border-left-color: var(--color-amber);
+}
+
+.app-sidebar__logout {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+}
+
+.app-sidebar__logout-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .25);
+    color: rgba(255, 255, 255, .8);
+    padding: .5rem .75rem;
+    border-radius: .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.app-sidebar__logout-btn:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, .4);
+}
+
+body:has(> .app-sidebar) {
+    padding-left: var(--sidebar-width);
+}
+
+@media (max-width: 767.98px) {
+    .app-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        padding: .75rem 1rem;
+        overflow-x: auto;
+    }
+
+    .app-sidebar__brand {
+        margin-bottom: 0;
+        margin-right: 1rem;
+        white-space: nowrap;
+    }
+
+    .app-sidebar__nav {
+        flex-direction: row;
+        gap: .25rem;
+    }
+
+    .app-sidebar__link {
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+
+    .app-sidebar__link.is-active {
+        border-left-color: transparent;
+        border-bottom-color: var(--color-amber);
+    }
+
+    .app-sidebar__logout {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+        margin-left: .5rem;
+    }
+
+    .app-sidebar__logout-btn {
+        white-space: nowrap;
+        width: auto;
+    }
+
+    body:has(> .app-sidebar) {
+        padding-left: 0;
+    }
+}
+
+/* ---- Content surface ---- */
+
+body > main {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--bs-border-radius-lg);
+    box-shadow: 0 1px 2px rgba(27, 35, 64, .04);
+    padding: 2rem;
+    margin-block: 2rem;
+}
+
+@media (max-width: 767.98px) {
+    body > main {
+        margin: 1rem;
+        padding: 1.25rem;
+    }
+}
+
+/* ---- Buttons ---- */
+
+.btn-primary {
+    --bs-btn-bg: var(--color-amber);
+    --bs-btn-border-color: var(--color-amber);
+    --bs-btn-hover-bg: var(--color-amber-dark);
+    --bs-btn-hover-border-color: var(--color-amber-dark);
+    --bs-btn-active-bg: var(--color-amber-dark);
+    --bs-btn-active-border-color: var(--color-amber-dark);
+    --bs-btn-color: var(--color-navy);
+    --bs-btn-hover-color: var(--color-navy);
+    --bs-btn-active-color: var(--color-navy);
+    font-weight: 600;
+}
+
+/* ---- Tables ---- */
+
+.table {
+    --bs-table-border-color: var(--color-border);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: rgba(27, 35, 64, .025);
+}
+
+/* ---- Status chips ----
+ * Signature element: every place the app tracks a state (Calendar sync,
+ * Telegram send) uses the same dot+label chip, so status reads the same
+ * way everywhere instead of being a different color per page. */
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    background: var(--chip-bg, #EEE);
+    color: var(--chip-fg, #333);
+}
+
+.status-chip::before {
+    content: "";
+    width: .4rem;
+    height: .4rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-chip--synced, .status-chip--sent {
+    --chip-bg: var(--color-success-soft);
+    --chip-fg: var(--color-success);
+}
+
+.status-chip--pending {
+    --chip-bg: var(--color-amber-soft);
+    --chip-fg: var(--color-amber-dark);
+}
+
+.status-chip--failed {
+    --chip-bg: var(--color-danger-soft);
+    --chip-fg: var(--color-danger);
+}
+
+/* ---- Utility ---- */
+
+.text-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
