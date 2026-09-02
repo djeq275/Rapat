@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Pengaturan Telegram')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 500px;">
+    <h1 class="h4 mb-3">Pengaturan Token Bot Telegram</h1>
+
+    <p>
+        Status token:
+        <span class="badge bg-success" th:if="${tokenConfigured}">Sudah diset</span>
+        <span class="badge bg-secondary" th:unless="${tokenConfigured}">Belum diset</span>
+    </p>
+
+    <form method="post" th:object="${form}" th:action="@{/admin/telegram/settings}">
+        <div class="mb-3">
+            <label class="form-label" for="token">Token Bot</label>
+            <input class="form-control" id="token" type="password" th:field="*{token}" autocomplete="off"/>
+            <div class="form-text">Kosongkan jika tidak ingin mengubah token yang sudah tersimpan. Token tidak pernah ditampilkan ulang setelah disimpan.</div>
+        </div>
+        <button class="btn btn-primary" type="submit">Simpan</button>
+    </form>
+</main>
+</body>
+</html>

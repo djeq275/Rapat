@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Form Grup Telegram')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 500px;">
+    <h1 class="h4 mb-3">Form Grup Telegram</h1>
+    <form method="post" th:object="${form}"
+          th:action="${groupId} != null ? @{/admin/telegram-groups/{id}(id=${groupId})} : @{/admin/telegram-groups}">
+
+        <div class="alert alert-danger" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+
+        <div class="mb-3">
+            <label class="form-label" for="name">Nama Grup</label>
+            <input class="form-control" id="name" th:field="*{name}" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="chatId">Chat ID</label>
+            <input class="form-control" id="chatId" th:field="*{chatId}" required="required"/>
+            <div class="form-text">Didapat setelah bot ditambahkan ke grup Telegram tujuan.</div>
+        </div>
+        <div class="mb-3 form-check">
+            <input class="form-check-input" id="enabled" type="checkbox" th:field="*{enabled}"/>
+            <label class="form-check-label" for="enabled">Aktif</label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Simpan</button>
+        <a class="btn btn-link" th:href="@{/admin/telegram-groups}">Batal</a>
+    </form>
+</main>
+</body>
+</html>
