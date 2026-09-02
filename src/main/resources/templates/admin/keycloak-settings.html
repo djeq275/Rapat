@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Konfigurasi Keycloak')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 500px;">
+    <h1 class="h4 mb-3">Konfigurasi Koneksi Keycloak</h1>
+
+    <p>
+        Status: <span class="status-chip status-chip--sent" th:if="${configured}">Sudah dikonfigurasi</span>
+        <span class="status-chip status-chip--pending" th:unless="${configured}">Belum dikonfigurasi</span>
+    </p>
+
+    <form method="post" th:object="${form}" th:action="@{/admin/keycloak/settings}">
+        <div class="alert alert-danger" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+
+        <div class="mb-3">
+            <label class="form-label" for="serverUrl">URL Server Keycloak</label>
+            <input class="form-control" id="serverUrl" th:field="*{serverUrl}" placeholder="https://keycloak.company.local" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="realm">Realm</label>
+            <input class="form-control" id="realm" th:field="*{realm}" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="clientId">Client ID</label>
+            <input class="form-control" id="clientId" th:field="*{clientId}" required="required"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="clientSecret">Client Secret</label>
+            <input class="form-control" id="clientSecret" type="password" th:field="*{clientSecret}" autocomplete="off"/>
+            <div class="form-text">Kosongkan jika tidak ingin mengubah secret yang sudah tersimpan. Secret tidak pernah ditampilkan ulang setelah disimpan.</div>
+        </div>
+        <button class="btn btn-primary" type="submit">Simpan</button>
+    </form>
+</main>
+</body>
+</html>
