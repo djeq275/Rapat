@@ -42,6 +42,17 @@
         </div>
         <p class="text-muted small">Direktur otomatis diundang ke rapat ini.</p>
 
+        <div class="mb-3">
+            <label class="form-label">Grup Telegram Tujuan Undangan</label>
+            <div class="form-check" th:each="g : ${telegramGroups}">
+                <input class="form-check-input" type="checkbox" name="telegramGroupIds"
+                       th:id="${'telegram-group-' + g.id}" th:value="${g.id}"
+                       th:checked="${form.telegramGroupIds.contains(g.id)}"/>
+                <label class="form-check-label" th:for="${'telegram-group-' + g.id}" th:text="${g.name}"></label>
+            </div>
+            <div class="form-text" th:if="${#lists.isEmpty(telegramGroups)}">Belum ada grup Telegram aktif.</div>
+        </div>
+
         <button class="btn btn-primary" type="submit">Buat Rapat</button>
         <a class="btn btn-link" th:href="@{/meetings}">Batal</a>
     </form>

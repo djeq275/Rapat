@@ -56,6 +56,16 @@ public class MeetingTelegramGroup extends AuditableEntity {
     @Column(name = "send_status", nullable = false, length = 16)
     private TelegramSendStatus sendStatus = TelegramSendStatus.PENDING;
 
+    /**
+     * Composed once (by meeting.MeetingService, which has the meeting's
+     * content) when this row is first recorded, and reused verbatim on
+     * retry -- this module never depends on meeting, so it can't re-fetch
+     * the meeting's title/time/link to recompose the message later.
+     */
+    @Lob
+    @Column(name = "message_text", columnDefinition = "LONGTEXT")
+    private String messageText;
+
     @Lob
     @Column(name = "send_error", columnDefinition = "LONGTEXT")
     private String sendError;

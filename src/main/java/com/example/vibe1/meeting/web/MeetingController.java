@@ -26,6 +26,9 @@ import com.example.vibe1.meeting.MeetingSyncAuthorizationPort;
 import com.example.vibe1.meeting.MeetingTimeZone;
 import com.example.vibe1.meeting.NotetakerService;
 import com.example.vibe1.meeting.NotulensiAccessService;
+import com.example.vibe1.telegram.DivisionTelegramGroupService;
+import com.example.vibe1.telegram.MeetingTelegramNotificationService;
+import com.example.vibe1.telegram.TelegramGroupService;
 import com.example.vibe1.user.Role;
 import com.example.vibe1.user.User;
 import com.example.vibe1.user.UserRepository;
@@ -52,6 +55,9 @@ public class MeetingController {
     private final MeetingRepository meetingRepository;
     private final MeetingParticipantRepository participantRepository;
     private final UserRepository userRepository;
+    private final TelegramGroupService telegramGroupService;
+    private final DivisionTelegramGroupService divisionTelegramGroupService;
+    private final MeetingTelegramNotificationService meetingTelegramNotificationService;
 
     @GetMapping
     public String list(Principal principal, Model model) {
@@ -79,7 +85,17 @@ public class MeetingController {
         if (canManageNotetakers) {
             model.addAttribute("notetakerCandidates", notetakerService.findEligibleCandidates(id));
         }
+        model.addAttribute("telegramNotifications", meetingTelegramNotificationService.findByMeetingId(id));
+        // Same rule as calendar retry -- organizer or Admin.
+        model.addAttribute("canRetryTelegram", meetingSyncAuthorizationPort.canRetrySync(viewer, id));
         return "meeting/detail";
+    }
+
+    @PostMapping("/{id}/telegram-groups/{groupId}/retry")
+    public String retryTelegramNotification(@PathVariable Long id, @PathVariable Long groupId, Principal principal) {
+        meetingSyncAuthorizationPort.assertCanRetrySync(currentUser(principal), id);
+        meetingTelegramNotificationService.retry(id, groupId);
+        return "redirect:/meetings/" + id;
     }
 
     @PostMapping("/{id}/notulensi")
@@ -116,8 +132,11 @@ public class MeetingController {
     @GetMapping("/new")
     @PreAuthorize("hasRole('KETUA_DIVISI')")
     public String newForm(Principal principal, Model model) {
-        model.addAttribute("form", new MeetingForm());
-        addCandidates(currentUser(principal), model);
+        User organizer = currentUser(principal);
+        MeetingForm form = new MeetingForm();
+        form.setTelegramGroupIds(List.copyOf(divisionTelegramGroupService.findFavoriteGroupIds(organizer.getDivision().getId())));
+        model.addAttribute("form", form);
+        addCandidates(organizer, model);
         return "meeting/form";
     }
 
@@ -135,7 +154,8 @@ public class MeetingController {
                     form.getEndTime().atZone(MeetingTimeZone.WIB).toInstant(),
                     organizer.getDivision().getId(),
                     organizer.getId(),
-                    form.getParticipantUserIds());
+                    form.getParticipantUserIds(),
+                    form.getTelegramGroupIds());
             Meeting meeting = meetingService.create(command);
             return "redirect:/meetings/" + meeting.getId();
         } catch (IllegalArgumentException | NullPointerException ex) {
@@ -152,5 +172,6 @@ public class MeetingController {
 
     private void addCandidates(User organizer, Model model) {
         model.addAttribute("candidates", userRepository.findByDivisionIdAndRole(organizer.getDivision().getId(), Role.KARYAWAN));
+        model.addAttribute("telegramGroups", telegramGroupService.findActive());
     }
 }

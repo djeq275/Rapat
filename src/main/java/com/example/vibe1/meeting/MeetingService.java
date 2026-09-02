@@ -1,7 +1,9 @@
 package com.example.vibe1.meeting;
 
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.vibe1.division.Division;
 import com.example.vibe1.division.DivisionRepository;
+import com.example.vibe1.telegram.MeetingTelegramNotificationService;
 import com.example.vibe1.user.Role;
 import com.example.vibe1.user.User;
 import com.example.vibe1.user.UserRepository;
@@ -20,11 +23,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPort, MeetingSyncAuthorizationPort {
 
+    private static final DateTimeFormatter MESSAGE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.of("id", "ID"));
+
     private final MeetingRepository meetingRepository;
     private final MeetingParticipantRepository participantRepository;
     private final DivisionRepository divisionRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MeetingTelegramNotificationService meetingTelegramNotificationService;
 
     @Transactional
     public Meeting create(CreateMeetingCommand command) {
@@ -66,8 +72,24 @@ public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPo
             addParticipant(meeting, direktur, ParticipantAddedReason.DIREKTUR_AUTO);
         }
 
+        if (!command.telegramGroupIds().isEmpty()) {
+            meetingTelegramNotificationService.recordSelection(
+                    meeting.getId(), command.telegramGroupIds(), buildTelegramMessage(meeting));
+        }
+
         eventPublisher.publishEvent(new MeetingScheduledEvent(meeting.getId()));
         return meeting;
+    }
+
+    private String buildTelegramMessage(Meeting meeting) {
+        StringBuilder message = new StringBuilder()
+                .append("Undangan Rapat: ").append(meeting.getTitle()).append('\n')
+                .append("Waktu: ").append(MESSAGE_TIME_FORMAT.format(meeting.getStartTimeLocal()))
+                .append(" - ").append(MESSAGE_TIME_FORMAT.format(meeting.getEndTimeLocal()));
+        if (meeting.getMaterialLink() != null) {
+            message.append("\nMateri: ").append(meeting.getMaterialLink());
+        }
+        return message.toString();
     }
 
     private void addParticipant(Meeting meeting, User user, ParticipantAddedReason reason) {

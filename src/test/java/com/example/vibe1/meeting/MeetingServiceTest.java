@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.example.vibe1.division.Division;
 import com.example.vibe1.division.DivisionRepository;
+import com.example.vibe1.telegram.MeetingTelegramNotificationService;
 import com.example.vibe1.user.Role;
 import com.example.vibe1.user.User;
 import com.example.vibe1.user.UserRepository;
@@ -40,12 +41,14 @@ class MeetingServiceTest {
     UserRepository userRepository;
     @Mock
     ApplicationEventPublisher eventPublisher;
+    @Mock
+    MeetingTelegramNotificationService meetingTelegramNotificationService;
 
     MeetingService service;
 
     @Test
     void direkturIsAlwaysAddedExactlyOnceEvenIfAlsoSelected() {
-        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher);
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
 
         Division division = new Division("Engineering");
         division.setId(1L);
@@ -80,7 +83,7 @@ class MeetingServiceTest {
         Instant start = Instant.now();
         CreateMeetingCommand command = new CreateMeetingCommand(
                 "Rapat Mingguan", null, null, start, start.plus(1, ChronoUnit.HOURS),
-                1L, 10L, List.of(20L));
+                1L, 10L, List.of(20L), List.of());
 
         service.create(command);
 
@@ -97,7 +100,7 @@ class MeetingServiceTest {
 
     @Test
     void rejectsOrganizerFromDifferentDivision() {
-        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher);
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
 
         Division division = new Division("Engineering");
         division.setId(1L);
@@ -114,7 +117,7 @@ class MeetingServiceTest {
 
         Instant start = Instant.now();
         CreateMeetingCommand command = new CreateMeetingCommand(
-                "Rapat", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of());
+                "Rapat", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of(), List.of());
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.create(command));
         verify(eventPublisher, never()).publishEvent(any());

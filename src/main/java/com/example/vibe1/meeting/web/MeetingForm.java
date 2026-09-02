@@ -23,4 +23,5 @@ public class MeetingForm {
     private LocalDateTime endTime;
 
     private List<Long> participantUserIds = List.of();
+    private List<Long> telegramGroupIds = List.of();
 }

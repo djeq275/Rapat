@@ -11,5 +11,6 @@ public record CreateMeetingCommand(
         Instant endTime,
         Long divisionId,
         Long organizerId,
-        List<Long> participantUserIds) {
+        List<Long> participantUserIds,
+        List<Long> telegramGroupIds) {
 }
