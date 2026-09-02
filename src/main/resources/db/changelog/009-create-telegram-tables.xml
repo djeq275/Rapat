@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="009-create-telegram-group-table" author="vibe1">
+        <createTable tableName="telegram_group">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chat_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_telegram_group_chat_id"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="009b-create-division-telegram-group-table" author="vibe1">
+        <comment>Division's favorite Telegram groups -- default selection on the meeting-creation form, not a restriction.</comment>
+        <createTable tableName="division_telegram_group">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="division_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="telegram_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="division_telegram_group" columnNames="division_id, telegram_group_id"
+                              constraintName="uk_division_telegram_group"/>
+        <addForeignKeyConstraint baseTableName="division_telegram_group" baseColumnNames="division_id"
+                                  constraintName="fk_division_telegram_group_division"
+                                  referencedTableName="division" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="division_telegram_group" baseColumnNames="telegram_group_id"
+                                  constraintName="fk_division_telegram_group_group"
+                                  referencedTableName="telegram_group" referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="009c-create-meeting-telegram-group-table" author="vibe1">
+        <comment>
+            meeting_id is a plain column, not a foreign-key-backed JPA relation in the entity:
+            the telegram module must never depend on the meeting module (meeting depends on
+            telegram instead, one-way -- see CLAUDE.md). A DB-level FK is still added here for
+            data integrity since Liquibase/SQL isn't subject to the Java module boundary.
+        </comment>
+        <createTable tableName="meeting_telegram_group">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="meeting_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="telegram_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="send_status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="send_error" type="LONGTEXT"/>
+            <column name="sent_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="meeting_telegram_group" columnNames="meeting_id, telegram_group_id"
+                              constraintName="uk_meeting_telegram_group"/>
+        <addForeignKeyConstraint baseTableName="meeting_telegram_group" baseColumnNames="meeting_id"
+                                  constraintName="fk_meeting_telegram_group_meeting"
+                                  referencedTableName="meeting" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="meeting_telegram_group" baseColumnNames="telegram_group_id"
+                                  constraintName="fk_meeting_telegram_group_group"
+                                  referencedTableName="telegram_group" referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>
