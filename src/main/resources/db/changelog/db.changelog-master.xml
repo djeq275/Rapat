@@ -14,5 +14,6 @@
     <include file="db/changelog/007-create-meeting-notetaker-table.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/008-create-google-authorized-client-table.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/009-create-telegram-tables.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/010-create-telegram-bot-config-table.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
