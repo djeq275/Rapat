@@ -4,7 +4,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
-group = 'com.example'
+group = 'id.jagr'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -69,12 +69,12 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// Builds the local `meeting:1` image via Cloud Native Buildpacks (Paketo) --
+// Builds the local `rapat:1` image via Cloud Native Buildpacks (Paketo) --
 // no Dockerfile needed, this packages the boot jar directly. BP_JVM_VERSION
 // is pinned explicitly since Paketo only makes Java 25 the default from
 // September 2026 onward.
 tasks.named('bootBuildImage') {
-	imageName = 'meeting:1'
+	imageName = 'rapat:1'
 	environment = ['BP_JVM_VERSION': '25']
 }
 

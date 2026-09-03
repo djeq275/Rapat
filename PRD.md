@@ -115,7 +115,7 @@ Sebagai Admin, saya ingin mengatur client ID dan client secret Google OAuth lewa
 ### Architecture Overview
 
 - **Spring Boot MVC + Thymeleaf**: aplikasi web server-rendered, satu modular monolith.
-- **Spring Modulith**: setiap domain (mis. `division`, `meeting`, `user`, `notulensi`, `telegram`) menjadi modul terpisah di bawah `com.example.vibe1.*`, dengan batas modul yang diverifikasi Modulith.
+- **Spring Modulith**: setiap domain (mis. `division`, `meeting`, `user`, `notulensi`, `telegram`) menjadi modul terpisah di bawah `id.jagr.rapat.*`, dengan batas modul yang diverifikasi Modulith.
 - **Alur utama pembuatan rapat**: Ketua Divisi mengisi form rapat (termasuk pilihan grup Telegram tujuan, pre-filled dari favorit divisi) → aplikasi menyimpan entitas `Meeting` beserta daftar peserta (termasuk Direktur yang ditambahkan otomatis) dan daftar grup Telegram terpilih → aplikasi memanggil Google Calendar API untuk membuat event dengan attendee list → status sync disimpan di `Meeting` (sukses/gagal + timestamp).
 - **Alur notifikasi Telegram**: berjalan paralel dengan alur sync Google Calendar, dipicu oleh event yang sama saat rapat tersimpan → untuk setiap grup Telegram yang dipilih, aplikasi mengirim pesan undangan lewat Telegram Bot API → status kirim per grup dicatat (sukses/gagal); kegagalan tidak membatalkan pembuatan rapat maupun sync Calendar-nya.
 - **Alur notulensi**: Ketua Divisi/Admin menunjuk notulis untuk rapat tertentu → hak edit tersimpan sebagai relasi (mis. tabel penunjukan notulis per-rapat) → notulis/Ketua Divisi mengisi link Google Doc + ringkasan notulensi pada detail rapat → peserta rapat (sesuai aturan visibilitas divisi) dapat membaca hasilnya.

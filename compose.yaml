@@ -14,8 +14,8 @@ services:
       timeout: 5s
       retries: 10
 
-  meeting:
-    image: 'meeting:1'
+  rapat:
+    image: 'rapat:1'
     depends_on:
       mariadb:
         condition: service_healthy
