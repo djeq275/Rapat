@@ -1,7 +1,5 @@
 package com.example.vibe1.security;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -13,20 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * {@code @EnableConfigurationProperties(OAuth2ClientProperties.class)} is
- * needed here because {@link DynamicClientRegistrationRepository} replaces
- * Spring Boot's auto-configured {@code ClientRegistrationRepository} bean --
- * and Boot only binds {@code OAuth2ClientProperties} inside the very same
- * {@code @ConditionalOnMissingBean(ClientRegistrationRepository.class)}
- * configuration class that builds that default repository. Once we supply
- * our own, that whole class (properties binding included) backs off, so we
- * re-enable the properties binding ourselves to keep injecting it.
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(OAuth2ClientProperties.class)
 public class SecurityConfig {
 
     /**
@@ -60,9 +47,10 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo.oidcUserService(appOidcUserService))
                         .defaultSuccessUrl("/", false))
                 // Handles the "google-calendar" registration's authorization-code
-                // callback (see its redirect-uri override in application.properties)
-                // as a plain incremental-scope grant, not a login attempt --
-                // oauth2Login() alone only processes /login/oauth2/code/**.
+                // callback (see its redirect-uri override in
+                // DynamicClientRegistrationRepository) as a plain incremental-scope
+                // grant, not a login attempt -- oauth2Login() alone only processes
+                // /login/oauth2/code/**.
                 .oauth2Client(Customizer.withDefaults())
                 .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
                 .exceptionHandling(exceptions -> exceptions.accessDeniedPage("/error/403"));
