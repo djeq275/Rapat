@@ -1,60 +1,73 @@
 package com.example.vibe1.security;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientProperties;
-import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientPropertiesMapper;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistrations;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
  * Replaces Spring Boot's auto-configured {@code ClientRegistrationRepository}
  * entirely (Boot's {@code @ConditionalOnMissingBean} backs off once this bean
- * exists) so a {@code keycloak} registration built from database-stored
- * {@link KeycloakConfig} can sit alongside the two statically-configured
- * Google registrations.
+ * exists) so every registration this app uses -- {@code keycloak},
+ * {@code google-login}, {@code google-calendar} -- is built from
+ * database-stored config instead of {@code application.properties}.
  *
- * <p>{@code google-login}/{@code google-calendar} are served exactly as Boot
- * would have served them -- built once at startup via
- * {@link OAuth2ClientPropertiesMapper} (the same mapper Boot's own
- * auto-configuration uses internally), from {@code application.properties}.
- * Nothing about their resolution changes.
+ * <p>{@code keycloak} is built lazily from {@link KeycloakConfigService} via
+ * OIDC issuer discovery (a network call, see {@link #toClientRegistration});
+ * a discovery failure is swallowed to a {@code null} lookup rather than
+ * thrown.
  *
- * <p>{@code keycloak} is built lazily from {@link KeycloakConfigService} on
- * first use, then cached -- OIDC issuer discovery is a network call, and
- * doing it on every login attempt would be wasteful. The cache is dropped by
- * {@link #onKeycloakConfigSaved} (fired synchronously by
- * {@link KeycloakConfigService#save}), so the next login attempt after an
- * Admin edit rebuilds it -- no restart needed. A discovery failure (bad
- * issuer URL, server unreachable) is swallowed here rather than thrown, so
- * {@link #findByRegistrationId} just returns {@code null} as if
- * unconfigured, instead of surfacing a raw discovery exception mid-login.
+ * <p>{@code google-login}/{@code google-calendar} are built lazily from
+ * {@link GoogleOAuthConfigService} -- no discovery needed, since Google's
+ * endpoints are already static via Spring Security's built-in
+ * {@link CommonOAuth2Provider#GOOGLE}. Both share one {@link GoogleOAuthConfig}
+ * client id/secret (one OAuth app in Google Cloud Console, same as before
+ * this class existed) but differ in scope/grant-type/redirect-uri, matching
+ * exactly what used to be declared per-registration in
+ * {@code application.properties}.
+ *
+ * <p>Every registration is cached in memory after first build, since a
+ * database read (and, for Keycloak, a discovery call) on every single
+ * request would be wasteful. Each cache is dropped by its config's
+ * {@code *ConfigSavedEvent} (fired synchronously by the owning
+ * {@code *ConfigService.save}), so the next login/consent attempt after an
+ * Admin edit rebuilds it -- no restart needed.
  */
 @Component
 class DynamicClientRegistrationRepository implements ClientRegistrationRepository {
 
     static final String KEYCLOAK_REGISTRATION_ID = "keycloak";
+    static final String GOOGLE_LOGIN_REGISTRATION_ID = "google-login";
+    static final String GOOGLE_CALENDAR_REGISTRATION_ID = "google-calendar";
 
-    private final Map<String, ClientRegistration> staticRegistrations;
     private final KeycloakConfigService keycloakConfigService;
-    private final AtomicReference<ClientRegistration> keycloakRegistration = new AtomicReference<>();
+    private final GoogleOAuthConfigService googleOAuthConfigService;
 
-    DynamicClientRegistrationRepository(OAuth2ClientProperties properties, KeycloakConfigService keycloakConfigService) {
-        this.staticRegistrations = new OAuth2ClientPropertiesMapper(properties).asClientRegistrations();
+    private final AtomicReference<ClientRegistration> keycloakRegistration = new AtomicReference<>();
+    private final AtomicReference<ClientRegistration> googleLoginRegistration = new AtomicReference<>();
+    private final AtomicReference<ClientRegistration> googleCalendarRegistration = new AtomicReference<>();
+
+    DynamicClientRegistrationRepository(KeycloakConfigService keycloakConfigService,
+            GoogleOAuthConfigService googleOAuthConfigService) {
         this.keycloakConfigService = keycloakConfigService;
+        this.googleOAuthConfigService = googleOAuthConfigService;
     }
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        if (KEYCLOAK_REGISTRATION_ID.equals(registrationId)) {
-            return resolveKeycloakRegistration();
-        }
-        return staticRegistrations.get(registrationId);
+        return switch (registrationId) {
+            case KEYCLOAK_REGISTRATION_ID -> resolveCached(keycloakRegistration, this::buildKeycloakRegistration);
+            case GOOGLE_LOGIN_REGISTRATION_ID -> resolveCached(googleLoginRegistration, this::buildGoogleLoginRegistration);
+            case GOOGLE_CALENDAR_REGISTRATION_ID -> resolveCached(googleCalendarRegistration, this::buildGoogleCalendarRegistration);
+            default -> null;
+        };
     }
 
     @EventListener
@@ -62,14 +75,20 @@ class DynamicClientRegistrationRepository implements ClientRegistrationRepositor
         keycloakRegistration.set(null);
     }
 
-    private ClientRegistration resolveKeycloakRegistration() {
-        ClientRegistration cached = keycloakRegistration.get();
+    @EventListener
+    void onGoogleOAuthConfigSaved(GoogleOAuthConfigSavedEvent event) {
+        googleLoginRegistration.set(null);
+        googleCalendarRegistration.set(null);
+    }
+
+    private ClientRegistration resolveCached(AtomicReference<ClientRegistration> cache, Supplier<ClientRegistration> builder) {
+        ClientRegistration cached = cache.get();
         if (cached != null) {
             return cached;
         }
-        ClientRegistration built = buildKeycloakRegistration();
+        ClientRegistration built = builder.get();
         if (built != null) {
-            keycloakRegistration.compareAndSet(null, built);
+            cache.compareAndSet(null, built);
         }
         return built;
     }
@@ -82,7 +101,7 @@ class DynamicClientRegistrationRepository implements ClientRegistrationRepositor
 
     // Package-private (not private) so tests can override it to stub out the
     // real network call OIDC discovery makes, while exercising the real
-    // caching/invalidation logic in resolveKeycloakRegistration() untouched.
+    // caching/invalidation logic in resolveCached() untouched.
     ClientRegistration toClientRegistration(KeycloakConfig config) {
         String issuerUri = StringUtils.trimTrailingCharacter(config.getServerUrl(), '/')
                 + "/realms/" + config.getRealm();
@@ -95,5 +114,33 @@ class DynamicClientRegistrationRepository implements ClientRegistrationRepositor
         } catch (RuntimeException discoveryFailed) {
             return null;
         }
+    }
+
+    private ClientRegistration buildGoogleLoginRegistration() {
+        return googleOAuthConfigService.currentConfig()
+                .map(config -> CommonOAuth2Provider.GOOGLE.getBuilder(GOOGLE_LOGIN_REGISTRATION_ID)
+                        .clientId(config.getClientId())
+                        .clientSecret(config.getClientSecretEnc())
+                        .scope("openid", "email", "profile")
+                        .build())
+                .orElse(null);
+    }
+
+    // Requested separately from google-login (incremental auth), only from
+    // organizer-capable users -- see CalendarConsentStatus. Same OAuth client
+    // as google-login, narrower scope, its own redirect-uri (must NOT be
+    // under /login/oauth2/code/** -- that path is claimed by oauth2Login()'s
+    // login filter, which would treat this callback as a login attempt
+    // instead of a plain incremental-scope grant; see SecurityConfig).
+    private ClientRegistration buildGoogleCalendarRegistration() {
+        return googleOAuthConfigService.currentConfig()
+                .map(config -> CommonOAuth2Provider.GOOGLE.getBuilder(GOOGLE_CALENDAR_REGISTRATION_ID)
+                        .clientId(config.getClientId())
+                        .clientSecret(config.getClientSecretEnc())
+                        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                        .scope("https://www.googleapis.com/auth/calendar.events")
+                        .redirectUri("{baseUrl}/connect/google-calendar")
+                        .build())
+                .orElse(null);
     }
 }

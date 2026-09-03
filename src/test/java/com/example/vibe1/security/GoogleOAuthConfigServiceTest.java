@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -22,27 +23,32 @@ class GoogleOAuthConfigServiceTest {
 
     @Mock
     GoogleOAuthConfigRepository repository;
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     GoogleOAuthConfigService service;
 
     @Test
     void firstSaveRequiresClientSecret() {
-        service = new GoogleOAuthConfigService(repository);
+        service = new GoogleOAuthConfigService(repository, eventPublisher);
         when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.save("rapat-app", ""))
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(repository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void firstSaveWithSecretCreatesRow() {
-        service = new GoogleOAuthConfigService(repository);
+        service = new GoogleOAuthConfigService(repository, eventPublisher);
         when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.save("rapat-app", "s3cr3t");
+
+        verify(eventPublisher).publishEvent(any(GoogleOAuthConfigSavedEvent.class));
 
         ArgumentCaptor<GoogleOAuthConfig> captor = ArgumentCaptor.forClass(GoogleOAuthConfig.class);
         verify(repository).save(captor.capture());
@@ -52,7 +58,7 @@ class GoogleOAuthConfigServiceTest {
 
     @Test
     void blankSecretOnUpdateKeepsExistingSecretButUpdatesClientId() {
-        service = new GoogleOAuthConfigService(repository);
+        service = new GoogleOAuthConfigService(repository, eventPublisher);
         GoogleOAuthConfig existing = new GoogleOAuthConfig();
         existing.setId(1L);
         existing.setClientId("old-client");
@@ -70,7 +76,7 @@ class GoogleOAuthConfigServiceTest {
 
     @Test
     void nonBlankSecretOnUpdateReplacesSecret() {
-        service = new GoogleOAuthConfigService(repository);
+        service = new GoogleOAuthConfigService(repository, eventPublisher);
         GoogleOAuthConfig existing = new GoogleOAuthConfig();
         existing.setId(1L);
         existing.setClientSecretEnc("old-secret");
@@ -86,7 +92,7 @@ class GoogleOAuthConfigServiceTest {
 
     @Test
     void isConfiguredReflectsRepositoryState() {
-        service = new GoogleOAuthConfigService(repository);
+        service = new GoogleOAuthConfigService(repository, eventPublisher);
         lenient().when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
         assertThat(service.isConfigured()).isFalse();
