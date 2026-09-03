@@ -2,6 +2,7 @@ package com.example.vibe1.security;
 
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,16 +11,17 @@ import lombok.RequiredArgsConstructor;
 /**
  * Keeps exactly one {@link KeycloakConfig} row -- reads/replaces it, never
  * inserts a second one. The Admin form (issue #25) calls {@link #save} to
- * set/update the connection details; issue #26's dynamic
- * {@code ClientRegistrationRepository} calls {@link #currentConfig} to build
- * the {@code keycloak} registration and must invalidate its cache whenever
- * {@link #save} runs.
+ * set/update the connection details; {@link #save} then publishes
+ * {@link KeycloakConfigSavedEvent} so {@link DynamicClientRegistrationRepository}
+ * invalidates its cached {@code keycloak} registration -- the next login
+ * attempt picks up the new config without an app restart.
  */
 @Service
 @RequiredArgsConstructor
 public class KeycloakConfigService {
 
     private final KeycloakConfigRepository repository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Optional<KeycloakConfig> currentConfig() {
@@ -49,5 +51,6 @@ public class KeycloakConfigService {
             throw new IllegalArgumentException("Client secret wajib diisi saat pertama kali mengatur konfigurasi Keycloak");
         }
         repository.save(config);
+        eventPublisher.publishEvent(new KeycloakConfigSavedEvent());
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.vibe1.division.DivisionRepository;
-import com.example.vibe1.security.GoogleOidcUserService;
+import com.example.vibe1.security.AppOidcUserService;
 import com.example.vibe1.security.SecurityConfig;
 import com.example.vibe1.telegram.DivisionTelegramGroupService;
 import com.example.vibe1.telegram.TelegramGroupService;
@@ -28,7 +28,7 @@ class DivisionTelegramGroupAdminControllerTest {
     @MockitoBean
     DivisionTelegramGroupService divisionTelegramGroupService;
     @MockitoBean
-    GoogleOidcUserService googleOidcUserService;
+    AppOidcUserService appOidcUserService;
 
     @Autowired
     MockMvc mockMvc;

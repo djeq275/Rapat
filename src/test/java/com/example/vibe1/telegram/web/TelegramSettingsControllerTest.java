@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.example.vibe1.security.GoogleOidcUserService;
+import com.example.vibe1.security.AppOidcUserService;
 import com.example.vibe1.security.SecurityConfig;
 import com.example.vibe1.telegram.TelegramBotConfigService;
 
@@ -28,7 +28,7 @@ class TelegramSettingsControllerTest {
     @MockitoBean
     TelegramBotConfigService telegramBotConfigService;
     @MockitoBean
-    GoogleOidcUserService googleOidcUserService;
+    AppOidcUserService appOidcUserService;
 
     @Autowired
     MockMvc mockMvc;

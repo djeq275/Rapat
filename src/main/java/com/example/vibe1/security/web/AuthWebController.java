@@ -1,13 +1,22 @@
 package com.example.vibe1.security.web;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.example.vibe1.security.KeycloakConfigService;
+
+import lombok.RequiredArgsConstructor;
+
 @Controller
+@RequiredArgsConstructor
 public class AuthWebController {
 
+    private final KeycloakConfigService keycloakConfigService;
+
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        model.addAttribute("keycloakConfigured", keycloakConfigService.isConfigured());
         return "auth/login";
     }
 

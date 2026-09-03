@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -22,27 +23,32 @@ class KeycloakConfigServiceTest {
 
     @Mock
     KeycloakConfigRepository repository;
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     KeycloakConfigService service;
 
     @Test
     void firstSaveRequiresClientSecret() {
-        service = new KeycloakConfigService(repository);
+        service = new KeycloakConfigService(repository, eventPublisher);
         when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.save("https://keycloak.local", "company", "rapat-app", ""))
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(repository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void firstSaveWithSecretCreatesRow() {
-        service = new KeycloakConfigService(repository);
+        service = new KeycloakConfigService(repository, eventPublisher);
         when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.save("https://keycloak.local", "company", "rapat-app", "s3cr3t");
+
+        verify(eventPublisher).publishEvent(any(KeycloakConfigSavedEvent.class));
 
         ArgumentCaptor<KeycloakConfig> captor = ArgumentCaptor.forClass(KeycloakConfig.class);
         verify(repository).save(captor.capture());
@@ -54,7 +60,7 @@ class KeycloakConfigServiceTest {
 
     @Test
     void blankSecretOnUpdateKeepsExistingSecretButUpdatesOtherFields() {
-        service = new KeycloakConfigService(repository);
+        service = new KeycloakConfigService(repository, eventPublisher);
         KeycloakConfig existing = new KeycloakConfig();
         existing.setId(1L);
         existing.setServerUrl("https://old.local");
@@ -76,7 +82,7 @@ class KeycloakConfigServiceTest {
 
     @Test
     void nonBlankSecretOnUpdateReplacesSecret() {
-        service = new KeycloakConfigService(repository);
+        service = new KeycloakConfigService(repository, eventPublisher);
         KeycloakConfig existing = new KeycloakConfig();
         existing.setId(1L);
         existing.setClientSecretEnc("old-secret");
@@ -92,7 +98,7 @@ class KeycloakConfigServiceTest {
 
     @Test
     void isConfiguredReflectsRepositoryState() {
-        service = new KeycloakConfigService(repository);
+        service = new KeycloakConfigService(repository, eventPublisher);
         lenient().when(repository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
         assertThat(service.isConfigured()).isFalse();

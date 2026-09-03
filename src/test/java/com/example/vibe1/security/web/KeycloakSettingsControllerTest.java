@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.example.vibe1.security.GoogleOidcUserService;
+import com.example.vibe1.security.AppOidcUserService;
 import com.example.vibe1.security.KeycloakConfig;
 import com.example.vibe1.security.KeycloakConfigService;
 import com.example.vibe1.security.SecurityConfig;
@@ -34,7 +34,7 @@ class KeycloakSettingsControllerTest {
     @MockitoBean
     KeycloakConfigService keycloakConfigService;
     @MockitoBean
-    GoogleOidcUserService googleOidcUserService;
+    AppOidcUserService appOidcUserService;
 
     @Autowired
     MockMvc mockMvc;
