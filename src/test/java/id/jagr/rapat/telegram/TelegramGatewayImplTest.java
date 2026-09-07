@@ -1,5 +1,6 @@
 package id.jagr.rapat.telegram;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,5 +66,49 @@ class TelegramGatewayImplTest {
         assertThatThrownBy(() -> gateway.sendMessage("-100123", "halo"))
                 .isInstanceOf(TelegramSendException.class)
                 .hasMessageContaining("chat not found");
+    }
+
+    @Test
+    void fetchesDistinctGroupChatsIgnoringPrivateChatsAndDuplicates() {
+        when(botConfigService.currentToken()).thenReturn(Optional.of("test-token"));
+        server.expect(requestTo("https://api.telegram.org/bottest-token/getUpdates"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        {"ok":true,"result":[
+                          {"update_id":1,"message":{"chat":{"id":-100111,"title":"Grup A","type":"supergroup"}}},
+                          {"update_id":2,"message":{"chat":{"id":-100111,"title":"Grup A","type":"supergroup"}}},
+                          {"update_id":3,"message":{"chat":{"id":222,"first_name":"Budi","type":"private"}}},
+                          {"update_id":4,"message":{"chat":{"id":-100333,"title":"Grup B","type":"group"}}}
+                        ]}
+                        """, MediaType.APPLICATION_JSON));
+
+        List<TelegramChatCandidate> candidates = gateway.fetchRecentChats();
+
+        assertThat(candidates).containsExactly(
+                new TelegramChatCandidate("-100111", "Grup A"),
+                new TelegramChatCandidate("-100333", "Grup B"));
+        server.verify();
+    }
+
+    @Test
+    void fetchRecentChatsThrowsWhenTokenNotConfigured() {
+        when(botConfigService.currentToken()).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> gateway.fetchRecentChats())
+                .isInstanceOf(TelegramSendException.class)
+                .hasMessageContaining("belum diset");
+    }
+
+    @Test
+    void fetchRecentChatsThrowsWithTelegramsDescriptionWhenRejected() {
+        when(botConfigService.currentToken()).thenReturn(Optional.of("test-token"));
+        server.expect(requestTo("https://api.telegram.org/bottest-token/getUpdates"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"ok\":false,\"description\":\"Unauthorized\"}"));
+
+        assertThatThrownBy(() -> gateway.fetchRecentChats())
+                .isInstanceOf(TelegramSendException.class)
+                .hasMessageContaining("Unauthorized");
     }
 }
