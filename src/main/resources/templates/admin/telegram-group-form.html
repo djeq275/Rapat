@@ -14,10 +14,22 @@
             <label class="form-label" for="name">Nama Grup</label>
             <input class="form-control" id="name" th:field="*{name}" required="required"/>
         </div>
+        <div class="mb-3" th:if="${tokenConfigured}">
+            <label class="form-label" for="chatCandidate">Pilih dari grup yang terdeteksi</label>
+            <select class="form-select" id="chatCandidate" th:if="${not #lists.isEmpty(chatCandidates)}">
+                <option value="">-- pilih grup --</option>
+                <option th:each="candidate : ${chatCandidates}"
+                        th:value="${candidate.chatId()}"
+                        th:text="|${candidate.displayName()} (${candidate.chatId()})|"></option>
+            </select>
+            <p class="text-muted small mb-0" th:if="${#lists.isEmpty(chatCandidates)}">
+                Belum ada grup terdeteksi. Kirim pesan apa pun ke grup dulu, lalu buka halaman ini lagi.
+            </p>
+        </div>
         <div class="mb-3">
             <label class="form-label" for="chatId">Chat ID</label>
             <input class="form-control" id="chatId" th:field="*{chatId}" required="required"/>
-            <div class="form-text">Didapat setelah bot ditambahkan ke grup Telegram tujuan.</div>
+            <div class="form-text">Didapat setelah bot ditambahkan ke grup Telegram tujuan -- atau pilih dari daftar di atas kalau tersedia.</div>
         </div>
         <div class="mb-3 form-check">
             <input class="form-check-input" id="enabled" type="checkbox" th:field="*{enabled}"/>
@@ -28,5 +40,12 @@
         <a class="btn btn-link" th:href="@{/admin/telegram-groups}">Batal</a>
     </form>
 </main>
+<script th:if="${not #lists.isEmpty(chatCandidates)}">
+    document.getElementById('chatCandidate').addEventListener('change', function () {
+        if (this.value) {
+            document.getElementById('chatId').value = this.value;
+        }
+    });
+</script>
 </body>
 </html>
