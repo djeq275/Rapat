@@ -1,12 +1,19 @@
 package id.jagr.rapat.user;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import id.jagr.rapat.common.AuditableEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 import lombok.Getter;
@@ -56,6 +63,13 @@ public class AppRole extends AuditableEntity {
     /** Ketua Divisi's behavior today: can create meetings for, and manage notulensi of, their own division. */
     @Column(name = "can_organize_meetings", nullable = false)
     private boolean canOrganizeMeetings;
+
+    /** Page/menu-level admin access (issue #46) -- only ever populated for non-{@link #builtIn} roles. */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "app_role_capability",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "capability_id"))
+    private Set<Capability> capabilities = new LinkedHashSet<>();
 
     public AppRole(String name, boolean builtIn, boolean requiresDivision, boolean autoInviteToAllMeetings,
                    boolean canViewAllDivisions, boolean canOrganizeMeetings) {

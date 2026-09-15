@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="016-create-capability-table" author="vibe1">
+        <comment>
+            Page/menu-level admin capabilities a role can be granted (issue #46) -- one row per
+            existing @PreAuthorize("hasRole('ADMIN')") admin screen (inventory in issue #43).
+            Seeded here, not Admin-editable: this catalog only grows when a new admin feature
+            ships in code.
+        </comment>
+        <createTable tableName="capability">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_capability_code"/>
+            </column>
+            <column name="label" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="016b-seed-capabilities" author="vibe1">
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_USERS"/>
+            <column name="label" value="Kelola Pengguna"/>
+        </insert>
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_DIVISIONS"/>
+            <column name="label" value="Kelola Divisi"/>
+        </insert>
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_TELEGRAM_GROUPS"/>
+            <column name="label" value="Kelola Grup Telegram"/>
+        </insert>
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_TELEGRAM_BOT_CONFIG"/>
+            <column name="label" value="Kelola Token Bot Telegram"/>
+        </insert>
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_KEYCLOAK_CONFIG"/>
+            <column name="label" value="Kelola Konfigurasi Keycloak"/>
+        </insert>
+        <insert tableName="capability">
+            <column name="code" value="MANAGE_GOOGLE_OAUTH_CONFIG"/>
+            <column name="label" value="Kelola Konfigurasi Google OAuth"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="016c-create-app-role-capability-table" author="vibe1">
+        <comment>Only ever populated for role rows where built_in=false (see AppRole).</comment>
+        <createTable tableName="app_role_capability">
+            <column name="role_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="capability_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="app_role_capability" baseColumnNames="role_id"
+                                  constraintName="fk_app_role_capability_role"
+                                  referencedTableName="app_role" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="app_role_capability" baseColumnNames="capability_id"
+                                  constraintName="fk_app_role_capability_capability"
+                                  referencedTableName="capability" referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

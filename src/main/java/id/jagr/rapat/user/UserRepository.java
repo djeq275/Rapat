@@ -23,6 +23,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByDivisionIdAndRole(Long divisionId, AppRole role);
 
+    boolean existsByRole(AppRole role);
+
+    long countByRole(AppRole role);
+
     /**
      * spring.jpa.open-in-view is disabled, so division (LAZY, and nullable
      * for Admin/Direktur -- hence LEFT JOIN) and role (LAZY, never null --
