@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Role')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">Role</h1>
+        <a class="btn btn-primary" th:href="@{/admin/roles/new}">Tambah Role</a>
+    </div>
+
+    <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Nama</th>
+            <th>Wajib Divisi</th>
+            <th>Auto-invite</th>
+            <th>Lihat Semua Divisi</th>
+            <th>Organizer &amp; Manager Notulensi</th>
+            <th>Hak Akses Halaman</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="role : ${roles}">
+            <td>
+                <span th:text="${role.name}"></span>
+                <span class="badge bg-secondary" th:if="${role.builtIn}">Bawaan</span>
+            </td>
+            <td th:text="${role.requiresDivision} ? 'Ya' : 'Tidak'"></td>
+            <td th:text="${role.autoInviteToAllMeetings} ? 'Ya' : 'Tidak'"></td>
+            <td th:text="${role.canViewAllDivisions} ? 'Ya' : 'Tidak'"></td>
+            <td th:text="${role.canOrganizeMeetings} ? 'Ya' : 'Tidak'"></td>
+            <td>
+                <span th:each="cap, capStat : ${role.capabilities}">
+                    <span th:text="${cap.label}"></span><span th:unless="${capStat.last}">, </span>
+                </span>
+                <span class="text-muted" th:if="${#sets.isEmpty(role.capabilities)}">-</span>
+            </td>
+            <td>
+                <a th:href="@{/admin/roles/{id}/edit(id=${role.id})}">Edit</a>
+                <form th:if="${!role.builtIn}" method="post" th:action="@{/admin/roles/{id}/delete(id=${role.id})}"
+                      class="d-inline" onsubmit="return confirm('Hapus role ini? Tindakan ini tidak bisa dibatalkan.');">
+                    <button class="btn btn-link btn-sm text-danger p-0 ms-2" type="submit">Hapus</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

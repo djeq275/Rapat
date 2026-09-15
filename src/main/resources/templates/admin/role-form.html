@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Form Role')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+<main class="container" style="max-width: 600px;">
+    <h1 class="h4 mb-3">Form Role</h1>
+    <p class="alert alert-info" th:if="${builtIn}">Role bawaan tidak bisa diubah -- nilai di bawah hanya untuk ditinjau.</p>
+
+    <form method="post" th:object="${form}"
+          th:action="${roleId} != null ? @{/admin/roles/{id}(id=${roleId})} : @{/admin/roles}">
+
+        <div class="alert alert-danger" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+
+        <div class="mb-3">
+            <label class="form-label" for="name">Nama Role</label>
+            <input class="form-control" id="name" th:field="*{name}" th:disabled="${builtIn}"/>
+            <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <fieldset class="mb-3">
+            <legend class="h6">Flag Perilaku</legend>
+            <div class="form-check">
+                <input class="form-check-input" id="requiresDivision" type="checkbox" th:field="*{requiresDivision}" th:disabled="${builtIn}"/>
+                <label class="form-check-label" for="requiresDivision">Wajib punya divisi</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" id="autoInviteToAllMeetings" type="checkbox" th:field="*{autoInviteToAllMeetings}" th:disabled="${builtIn}"/>
+                <label class="form-check-label" for="autoInviteToAllMeetings">Auto-invite ke semua rapat</label>
+                <div class="form-text" th:if="${userCount != null}">
+                    <span th:text="${userCount}"></span> pengguna saat ini memiliki role ini -- pertimbangkan dampaknya sebelum mengaktifkan flag ini.
+                </div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" id="canViewAllDivisions" type="checkbox" th:field="*{canViewAllDivisions}" th:disabled="${builtIn}"/>
+                <label class="form-check-label" for="canViewAllDivisions">Lihat rapat dari semua divisi</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" id="canOrganizeMeetings" type="checkbox" th:field="*{canOrganizeMeetings}" th:disabled="${builtIn}"/>
+                <label class="form-check-label" for="canOrganizeMeetings">Bisa jadi organizer rapat &amp; manager notulensi divisinya</label>
+            </div>
+        </fieldset>
+
+        <fieldset class="mb-3">
+            <legend class="h6">Hak Akses Halaman</legend>
+            <div class="form-check" th:each="cap : ${capabilities}">
+                <input class="form-check-input" type="checkbox" th:field="*{capabilityIds}"
+                       th:id="${'cap-' + cap.id}" th:value="${cap.id}" th:disabled="${builtIn}"/>
+                <label class="form-check-label" th:for="${'cap-' + cap.id}" th:text="${cap.label}"></label>
+            </div>
+            <div class="form-text" th:if="${#lists.isEmpty(capabilities)}">Belum ada kapabilitas terdaftar.</div>
+        </fieldset>
+
+        <button class="btn btn-primary" type="submit" th:unless="${builtIn}">Simpan</button>
+        <a class="btn btn-link" th:href="@{/admin/roles}">Batal</a>
+    </form>
+</main>
+</body>
+</html>
