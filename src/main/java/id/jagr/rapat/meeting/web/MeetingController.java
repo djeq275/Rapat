@@ -4,6 +4,7 @@ import java.security.Principal;
 
 import java.util.List;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -133,9 +134,10 @@ public class MeetingController {
     }
 
     @GetMapping("/new")
-    @PreAuthorize("hasRole('KETUA_DIVISI')")
+    @PreAuthorize("hasRole('KETUA_DIVISI') or hasAuthority('CAN_ORGANIZE_MEETINGS')")
     public String newForm(Principal principal, Model model) {
         User organizer = currentUser(principal);
+        assertHasDivision(organizer);
         MeetingForm form = new MeetingForm();
         form.setTelegramGroupIds(List.copyOf(divisionTelegramGroupService.findFavoriteGroupIds(organizer.getDivision().getId())));
         model.addAttribute("form", form);
@@ -144,10 +146,11 @@ public class MeetingController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('KETUA_DIVISI')")
+    @PreAuthorize("hasRole('KETUA_DIVISI') or hasAuthority('CAN_ORGANIZE_MEETINGS')")
     public String create(Principal principal, @ModelAttribute("form") MeetingForm form,
                           BindingResult bindingResult, Model model) {
         User organizer = currentUser(principal);
+        assertHasDivision(organizer);
         try {
             CreateMeetingCommand command = new CreateMeetingCommand(
                     form.getTitle(),
@@ -171,6 +174,19 @@ public class MeetingController {
     private User currentUser(Principal principal) {
         return userRepository.findByEmailIgnoreCase(principal.getName())
                 .orElseThrow(() -> new IllegalStateException("Pengguna tidak ditemukan: " + principal.getName()));
+    }
+
+    /**
+     * hasAuthority('CAN_ORGANIZE_MEETINGS') alone isn't enough to safely reach this method's
+     * body -- Admin's AppRole is seeded canOrganizeMeetings=true (for isOrganizerCapable's
+     * sake, issue #45) but Admin structurally never has a division, and every organizer path
+     * below dereferences organizer.getDivision().getId() directly. Without this guard that's
+     * a NullPointerException/500 for Admin instead of the clean 403 it gets today (issue #53).
+     */
+    private void assertHasDivision(User organizer) {
+        if (organizer.getDivision() == null) {
+            throw new AccessDeniedException("Anda tidak terikat ke divisi manapun, tidak bisa membuat rapat");
+        }
     }
 
     private void addCandidates(User organizer, Model model) {

@@ -21,19 +21,34 @@ class UserPrincipalTest {
     }
 
     @Test
-    void builtInRoleGrantsOnlyItsRoleAuthority() {
+    void builtInAdminRoleGrantsRoleAuthorityPlusCanOrganizeMeetings() {
         User user = new User();
         user.setEmail("test@company.local");
         user.setRole(AppRoleFixtures.admin());
         UserPrincipal principal = new UserPrincipal(user);
 
+        // Admin's AppRole is seeded canOrganizeMeetings=true for isOrganizerCapable's sake
+        // (issue #45) -- MeetingController's own division guard is what actually keeps Admin
+        // from creating meetings despite carrying this authority (issue #53).
         assertThat(principal.getAuthorities())
                 .extracting(Object::toString)
-                .containsExactly("ROLE_ADMIN");
+                .containsExactlyInAnyOrder("ROLE_ADMIN", "CAN_ORGANIZE_MEETINGS");
     }
 
     @Test
-    void customRoleGrantsRoleAuthorityPlusOneCapabilityAuthorityPerCapability() {
+    void builtInKaryawanRoleGrantsOnlyItsRoleAuthority() {
+        User user = new User();
+        user.setEmail("test@company.local");
+        user.setRole(AppRoleFixtures.karyawan());
+        UserPrincipal principal = new UserPrincipal(user);
+
+        assertThat(principal.getAuthorities())
+                .extracting(Object::toString)
+                .containsExactly("ROLE_KARYAWAN");
+    }
+
+    @Test
+    void customRoleGrantsRoleAuthorityPlusCapabilitiesPlusCanOrganizeMeetings() {
         AppRole custom = new AppRole("Manajer Regional", false, true, false, false, true);
         custom.setCapabilities(Set.of(capability("MANAGE_DIVISIONS"), capability("MANAGE_TELEGRAM_GROUPS")));
         User user = new User();
@@ -46,11 +61,12 @@ class UserPrincipalTest {
                 .containsExactlyInAnyOrder(
                         "ROLE_Manajer Regional",
                         "CAPABILITY_MANAGE_DIVISIONS",
-                        "CAPABILITY_MANAGE_TELEGRAM_GROUPS");
+                        "CAPABILITY_MANAGE_TELEGRAM_GROUPS",
+                        "CAN_ORGANIZE_MEETINGS");
     }
 
     @Test
-    void customRoleWithNoCapabilitiesGrantsOnlyItsRoleAuthority() {
+    void customRoleWithoutCanOrganizeMeetingsFlagDoesNotGrantThatAuthority() {
         AppRole custom = new AppRole("Peninjau", false, false, false, true, false);
         User user = new User();
         user.setEmail("test@company.local");

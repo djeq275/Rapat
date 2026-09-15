@@ -72,6 +72,11 @@ public class UserPrincipal implements UserDetails, OidcUser {
      * on top of the usual ROLE_&lt;name&gt; -- protected roles never have any capabilities (see
      * AppRole), so this is a pure addition for them. See the 7 controllers' @PreAuthorize for
      * where these are actually checked (issue #47).
+     *
+     * <p>CAN_ORGANIZE_MEETINGS mirrors AppRole.canOrganizeMeetings directly (not a Capability --
+     * it's a domain behavior flag, not a page/menu grant) so MeetingController's HTTP gate can
+     * be extended the same way (issue #53) without letting MeetingService.create()'s own
+     * division-match check be the only thing standing between a no-division role and a 500.
      */
     @Override
     public List<GrantedAuthority> getAuthorities() {
@@ -79,6 +84,9 @@ public class UserPrincipal implements UserDetails, OidcUser {
         authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
         for (Capability capability : user.getRole().getCapabilities()) {
             authorities.add(new SimpleGrantedAuthority("CAPABILITY_" + capability.getCode()));
+        }
+        if (user.getRole().isCanOrganizeMeetings()) {
+            authorities.add(new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS"));
         }
         return authorities;
     }
