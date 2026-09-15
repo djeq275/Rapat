@@ -1,7 +1,6 @@
-package id.jagr.rapat.telegram.web;
+package id.jagr.rapat.division.web;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,29 +11,21 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import id.jagr.rapat.division.Division;
-import id.jagr.rapat.division.DivisionRepository;
+import id.jagr.rapat.division.DivisionService;
 import id.jagr.rapat.security.AppOidcUserService;
 import id.jagr.rapat.security.SecurityConfig;
-import id.jagr.rapat.telegram.DivisionTelegramGroupService;
-import id.jagr.rapat.telegram.TelegramGroupService;
 
-import static java.util.Optional.of;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(DivisionTelegramGroupAdminController.class)
+@WebMvcTest(DivisionAdminController.class)
 @Import(SecurityConfig.class)
-class DivisionTelegramGroupAdminControllerTest {
+class DivisionAdminControllerTest {
 
     @MockitoBean
-    DivisionRepository divisionRepository;
-    @MockitoBean
-    TelegramGroupService telegramGroupService;
-    @MockitoBean
-    DivisionTelegramGroupService divisionTelegramGroupService;
+    DivisionService divisionService;
     @MockitoBean
     AppOidcUserService appOidcUserService;
     @MockitoBean
@@ -45,27 +36,31 @@ class DivisionTelegramGroupAdminControllerTest {
 
     @Test
     void nonAdminGets403() throws Exception {
-        mockMvc.perform(get("/admin/divisions/1/telegram-groups").with(user("karyawan@company.local").roles("KARYAWAN")))
+        mockMvc.perform(get("/admin/divisions").with(user("karyawan@company.local").roles("KARYAWAN")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void customRoleWithMatchingCapabilityCanAccess() throws Exception {
-        Division division = new Division("Engineering");
-        division.setId(1L);
-        when(divisionRepository.findById(1L)).thenReturn(of(division));
-        when(telegramGroupService.findActive()).thenReturn(List.of());
-        when(divisionTelegramGroupService.findFavoriteGroupIds(1L)).thenReturn(Set.of());
+    void adminCanAccessList() throws Exception {
+        when(divisionService.findAll()).thenReturn(List.of());
 
-        mockMvc.perform(get("/admin/divisions/1/telegram-groups").with(user("manajer@company.local")
-                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_TELEGRAM_GROUPS"))))
+        mockMvc.perform(get("/admin/divisions").with(user("admin@company.local").roles("ADMIN")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void customRoleWithMatchingCapabilityCanAccessList() throws Exception {
+        when(divisionService.findAll()).thenReturn(List.of());
+
+        mockMvc.perform(get("/admin/divisions").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_DIVISIONS"))))
                 .andExpect(status().isOk());
     }
 
     @Test
     void customRoleWithoutMatchingCapabilityStays403() throws Exception {
-        mockMvc.perform(get("/admin/divisions/1/telegram-groups").with(user("manajer@company.local")
-                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_DIVISIONS"))))
+        mockMvc.perform(get("/admin/divisions").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_USERS"))))
                 .andExpect(status().isForbidden());
     }
 }

@@ -77,4 +77,29 @@ class MeetingAccessServiceTest {
 
         assertThatCode(() -> service.assertCanView(viewer, meetingInDivision(other))).doesNotThrowAnyException();
     }
+
+    @Test
+    void customRoleWithCanViewAllDivisionsFlagCanViewAnyDivisionMeeting() {
+        service = new MeetingAccessService(meetingRepository);
+        Division other = new Division("Sales");
+        other.setId(2L);
+        AppRole direksiRegional = new AppRole("Direksi Regional", false, false, false, true, false);
+        User viewer = userWith(direksiRegional, null);
+
+        assertThatCode(() -> service.assertCanView(viewer, meetingInDivision(other))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void customRoleWithoutCanViewAllDivisionsFlagCannotViewOtherDivisionMeeting() {
+        service = new MeetingAccessService(meetingRepository);
+        Division own = new Division("Engineering");
+        own.setId(1L);
+        Division other = new Division("Sales");
+        other.setId(2L);
+        AppRole peninjauDivisi = new AppRole("Peninjau Divisi", false, true, false, false, false);
+        User viewer = userWith(peninjauDivisi, own);
+
+        assertThatThrownBy(() -> service.assertCanView(viewer, meetingInDivision(other)))
+                .isInstanceOf(AccessDeniedException.class);
+    }
 }

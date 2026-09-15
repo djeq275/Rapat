@@ -1,5 +1,6 @@
 package id.jagr.rapat.security;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.Capability;
 import id.jagr.rapat.user.User;
 
 /**
@@ -65,9 +67,20 @@ public class UserPrincipal implements UserDetails, OidcUser {
         return idToken != null ? idToken.getClaims() : attributes;
     }
 
+    /**
+     * Custom roles (issue #46) grant a CAPABILITY_&lt;code&gt; authority per page/menu capability
+     * on top of the usual ROLE_&lt;name&gt; -- protected roles never have any capabilities (see
+     * AppRole), so this is a pure addition for them. See the 7 controllers' @PreAuthorize for
+     * where these are actually checked (issue #47).
+     */
     @Override
     public List<GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
+        for (Capability capability : user.getRole().getCapabilities()) {
+            authorities.add(new SimpleGrantedAuthority("CAPABILITY_" + capability.getCode()));
+        }
+        return authorities;
     }
 
     @Override

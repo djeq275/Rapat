@@ -15,6 +15,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import id.jagr.rapat.division.Division;
 import id.jagr.rapat.division.DivisionRepository;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
+import id.jagr.rapat.user.AppRole;
 import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
@@ -121,5 +122,135 @@ class MeetingServiceTest {
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.create(command));
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    /**
+     * Admin's AppRole is seeded canOrganizeMeetings=true (issue #45, to keep isOrganizerCapable's
+     * Calendar-consent gate consistent) -- must NOT let Admin start creating meetings. Structurally
+     * safe because Admin can never have a division (UserService's "Admin/Direktur tidak boleh
+     * terikat ke satu divisi" rule), so the division-match check below still rejects it -- this
+     * test pins that down explicitly (issue #47).
+     */
+    @Test
+    void adminCannotOrganizeMeetingDespiteHavingCanOrganizeMeetingsFlag() {
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
+
+        Division division = new Division("Engineering");
+        division.setId(1L);
+
+        User admin = new User();
+        admin.setId(10L);
+        admin.setRole(AppRoleFixtures.admin());
+        admin.setDivision(null);
+
+        when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(admin));
+
+        Instant start = Instant.now();
+        CreateMeetingCommand command = new CreateMeetingCommand(
+                "Rapat", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of(), List.of());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.create(command));
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void customRoleWithOrganizeFlagAndMatchingDivisionCanCreateMeeting() {
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
+
+        Division division = new Division("Engineering");
+        division.setId(1L);
+        AppRole manajerRegional = new AppRole("Manajer Regional", false, true, false, false, true);
+
+        User organizer = new User();
+        organizer.setId(10L);
+        organizer.setRole(manajerRegional);
+        organizer.setDivision(division);
+
+        when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(organizer));
+        when(userRepository.findByRole_AutoInviteToAllMeetingsTrue()).thenReturn(List.of());
+        lenient().when(meetingRepository.save(any())).thenAnswer(invocation -> {
+            Meeting m = invocation.getArgument(0);
+            if (m.getId() == null) {
+                m.setId(101L);
+            }
+            return m;
+        });
+
+        Instant start = Instant.now();
+        CreateMeetingCommand command = new CreateMeetingCommand(
+                "Rapat Regional", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of(), List.of());
+
+        service.create(command);
+
+        verify(eventPublisher).publishEvent(new MeetingScheduledEvent(101L));
+    }
+
+    @Test
+    void customRoleWithoutOrganizeFlagCannotCreateMeeting() {
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
+
+        Division division = new Division("Engineering");
+        division.setId(1L);
+        AppRole peninjau = new AppRole("Peninjau", false, true, false, true, false);
+
+        User organizer = new User();
+        organizer.setId(10L);
+        organizer.setRole(peninjau);
+        organizer.setDivision(division);
+
+        when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(organizer));
+
+        Instant start = Instant.now();
+        CreateMeetingCommand command = new CreateMeetingCommand(
+                "Rapat", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of(), List.of());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.create(command));
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void multipleRolesWithAutoInviteFlagAreAllInvited() {
+        service = new MeetingService(meetingRepository, participantRepository, divisionRepository, userRepository, eventPublisher, meetingTelegramNotificationService);
+
+        Division division = new Division("Engineering");
+        division.setId(1L);
+
+        User organizer = new User();
+        organizer.setId(10L);
+        organizer.setRole(AppRoleFixtures.ketuaDivisi());
+        organizer.setDivision(division);
+
+        User direktur = new User();
+        direktur.setId(99L);
+        direktur.setRole(AppRoleFixtures.direktur());
+
+        User customAutoInvited = new User();
+        customAutoInvited.setId(88L);
+        customAutoInvited.setRole(new AppRole("Wakil Direktur", false, false, true, true, false));
+
+        when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(organizer));
+        when(userRepository.findByRole_AutoInviteToAllMeetingsTrue()).thenReturn(List.of(direktur, customAutoInvited));
+        lenient().when(meetingRepository.save(any())).thenAnswer(invocation -> {
+            Meeting m = invocation.getArgument(0);
+            if (m.getId() == null) {
+                m.setId(102L);
+            }
+            return m;
+        });
+        when(participantRepository.existsByMeetingIdAndUserId(anyLong(), any())).thenReturn(false);
+
+        Instant start = Instant.now();
+        CreateMeetingCommand command = new CreateMeetingCommand(
+                "Rapat", null, null, start, start.plus(1, ChronoUnit.HOURS), 1L, 10L, List.of(), List.of());
+
+        service.create(command);
+
+        ArgumentCaptor<MeetingParticipant> captor = ArgumentCaptor.forClass(MeetingParticipant.class);
+        verify(participantRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(p -> p.getUser().getId()).containsExactlyInAnyOrder(99L, 88L);
     }
 }

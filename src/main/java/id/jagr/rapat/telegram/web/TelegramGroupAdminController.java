@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/admin/telegram-groups")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_TELEGRAM_GROUPS')")
 @RequiredArgsConstructor
 public class TelegramGroupAdminController {
 

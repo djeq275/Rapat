@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,6 +58,22 @@ class TelegramGroupAdminControllerTest {
 
         mockMvc.perform(get("/admin/telegram-groups").with(user("admin@company.local").roles("ADMIN")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void customRoleWithMatchingCapabilityCanAccessList() throws Exception {
+        when(telegramGroupService.findAll()).thenReturn(List.of());
+
+        mockMvc.perform(get("/admin/telegram-groups").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_TELEGRAM_GROUPS"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void customRoleWithoutMatchingCapabilityStays403() throws Exception {
+        mockMvc.perform(get("/admin/telegram-groups").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_DIVISIONS"))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

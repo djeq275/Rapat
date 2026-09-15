@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 /** The token is never redisplayed once saved -- only whether one is currently set. */
 @Controller
 @RequestMapping("/admin/telegram/settings")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_TELEGRAM_BOT_CONFIG')")
 @RequiredArgsConstructor
 public class TelegramSettingsController {
 

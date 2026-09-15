@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Controller
 @RequestMapping("/admin/divisions/{divisionId}/telegram-groups")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_TELEGRAM_GROUPS')")
 @RequiredArgsConstructor
 public class DivisionTelegramGroupAdminController {
 

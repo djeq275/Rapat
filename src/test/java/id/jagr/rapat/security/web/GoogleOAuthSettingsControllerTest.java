@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,6 +46,23 @@ class GoogleOAuthSettingsControllerTest {
     @Test
     void nonAdminGets403() throws Exception {
         mockMvc.perform(get("/admin/google-oauth/settings").with(user("karyawan@company.local").roles("KARYAWAN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void customRoleWithMatchingCapabilityCanAccess() throws Exception {
+        when(googleOAuthConfigService.currentConfig()).thenReturn(Optional.empty());
+        when(googleOAuthConfigService.isConfigured()).thenReturn(false);
+
+        mockMvc.perform(get("/admin/google-oauth/settings").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_GOOGLE_OAUTH_CONFIG"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void customRoleWithoutMatchingCapabilityStays403() throws Exception {
+        mockMvc.perform(get("/admin/google-oauth/settings").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_KEYCLOAK_CONFIG"))))
                 .andExpect(status().isForbidden());
     }
 
