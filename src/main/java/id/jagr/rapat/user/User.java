@@ -5,8 +5,6 @@ import id.jagr.rapat.division.Division;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,9 +38,9 @@ public class User extends AuditableEntity {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private Role role;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private AppRole role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "division_id")
@@ -51,7 +49,8 @@ public class User extends AuditableEntity {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    /** Gates the Google Calendar consent scope (see {@code User.isOrganizerCapable} callers) -- same flag that gates creating/managing meetings for one's own division. */
     public boolean isOrganizerCapable() {
-        return role == Role.KETUA_DIVISI || role == Role.ADMIN;
+        return role.isCanOrganizeMeetings();
     }
 }

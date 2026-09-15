@@ -7,7 +7,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 import id.jagr.rapat.division.Division;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -27,7 +28,7 @@ class MeetingAccessServiceTest {
         return meeting;
     }
 
-    private User userWith(Role role, Division division) {
+    private User userWith(AppRole role, Division division) {
         User user = new User();
         user.setRole(role);
         user.setDivision(division);
@@ -39,7 +40,7 @@ class MeetingAccessServiceTest {
         service = new MeetingAccessService(meetingRepository);
         Division division = new Division("Engineering");
         division.setId(1L);
-        User viewer = userWith(Role.KARYAWAN, division);
+        User viewer = userWith(AppRoleFixtures.karyawan(), division);
 
         assertThatCode(() -> service.assertCanView(viewer, meetingInDivision(division))).doesNotThrowAnyException();
     }
@@ -51,7 +52,7 @@ class MeetingAccessServiceTest {
         own.setId(1L);
         Division other = new Division("Sales");
         other.setId(2L);
-        User viewer = userWith(Role.KARYAWAN, own);
+        User viewer = userWith(AppRoleFixtures.karyawan(), own);
 
         assertThatThrownBy(() -> service.assertCanView(viewer, meetingInDivision(other)))
                 .isInstanceOf(AccessDeniedException.class);
@@ -62,7 +63,7 @@ class MeetingAccessServiceTest {
         service = new MeetingAccessService(meetingRepository);
         Division other = new Division("Sales");
         other.setId(2L);
-        User viewer = userWith(Role.DIREKTUR, null);
+        User viewer = userWith(AppRoleFixtures.direktur(), null);
 
         assertThatCode(() -> service.assertCanView(viewer, meetingInDivision(other))).doesNotThrowAnyException();
     }
@@ -72,7 +73,7 @@ class MeetingAccessServiceTest {
         service = new MeetingAccessService(meetingRepository);
         Division other = new Division("Sales");
         other.setId(2L);
-        User viewer = userWith(Role.ADMIN, null);
+        User viewer = userWith(AppRoleFixtures.admin(), null);
 
         assertThatCode(() -> service.assertCanView(viewer, meetingInDivision(other))).doesNotThrowAnyException();
     }

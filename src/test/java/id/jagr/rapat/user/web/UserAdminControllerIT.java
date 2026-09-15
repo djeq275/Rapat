@@ -13,7 +13,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import id.jagr.rapat.division.Division;
 import id.jagr.rapat.division.DivisionRepository;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -44,6 +45,8 @@ class UserAdminControllerIT {
     DivisionRepository divisionRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    AppRoleRepository appRoleRepository;
 
     Division division;
     Long ketuaId;
@@ -54,7 +57,7 @@ class UserAdminControllerIT {
         User ketua = new User();
         ketua.setEmail("ketua-" + System.nanoTime() + "@company.local");
         ketua.setFullName("Ketua Divisi Test");
-        ketua.setRole(Role.KETUA_DIVISI);
+        ketua.setRole(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KETUA_DIVISI).orElseThrow());
         ketua.setDivision(division);
         ketuaId = userRepository.save(ketua).getId();
     }

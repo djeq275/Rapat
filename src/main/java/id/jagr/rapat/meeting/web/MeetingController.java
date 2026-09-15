@@ -29,7 +29,9 @@ import id.jagr.rapat.meeting.NotulensiAccessService;
 import id.jagr.rapat.telegram.DivisionTelegramGroupService;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
 import id.jagr.rapat.telegram.TelegramGroupService;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -55,6 +57,7 @@ public class MeetingController {
     private final MeetingRepository meetingRepository;
     private final MeetingParticipantRepository participantRepository;
     private final UserRepository userRepository;
+    private final AppRoleRepository appRoleRepository;
     private final TelegramGroupService telegramGroupService;
     private final DivisionTelegramGroupService divisionTelegramGroupService;
     private final MeetingTelegramNotificationService meetingTelegramNotificationService;
@@ -171,7 +174,8 @@ public class MeetingController {
     }
 
     private void addCandidates(User organizer, Model model) {
-        model.addAttribute("candidates", userRepository.findByDivisionIdAndRole(organizer.getDivision().getId(), Role.KARYAWAN));
+        AppRole karyawan = appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KARYAWAN).orElseThrow();
+        model.addAttribute("candidates", userRepository.findByDivisionIdAndRole(organizer.getDivision().getId(), karyawan));
         model.addAttribute("telegramGroups", telegramGroupService.findActive());
     }
 }

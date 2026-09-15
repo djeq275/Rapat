@@ -30,18 +30,23 @@ class UserServiceTest {
     DivisionService divisionService;
     @Mock
     PasswordEncoder passwordEncoder;
+    @Mock
+    AppRoleRepository appRoleRepository;
 
     UserService service;
 
     @Test
     void karyawanWithoutDivisionIsRejected() {
-        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder);
+        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder, appRoleRepository);
         lenient().when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.empty());
+        AppRole karyawan = AppRoleFixtures.karyawan();
+        karyawan.setId(4L);
+        when(appRoleRepository.findById(4L)).thenReturn(Optional.of(karyawan));
 
         UserForm form = new UserForm();
         form.setEmail("karyawan@company.local");
         form.setFullName("Karyawan");
-        form.setRole(Role.KARYAWAN);
+        form.setRoleId(4L);
         form.setDivisionId(null);
 
         assertThatThrownBy(() -> service.create(form)).isInstanceOf(IllegalArgumentException.class);
@@ -49,27 +54,33 @@ class UserServiceTest {
 
     @Test
     void adminWithDivisionIsRejected() {
-        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder);
+        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder, appRoleRepository);
         lenient().when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.empty());
+        AppRole admin = AppRoleFixtures.admin();
+        admin.setId(1L);
+        when(appRoleRepository.findById(1L)).thenReturn(Optional.of(admin));
 
         UserForm form = new UserForm();
         form.setEmail("admin2@company.local");
         form.setFullName("Admin Dua");
-        form.setRole(Role.ADMIN);
+        form.setRoleId(1L);
         form.setDivisionId(1L);
 
         assertThatThrownBy(() -> service.create(form)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void divisionLeaderFlagRejectedForNonKetuaDivisi() {
-        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder);
+    void divisionLeaderFlagRejectedForNonOrganizerRole() {
+        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder, appRoleRepository);
         lenient().when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.empty());
+        AppRole karyawan = AppRoleFixtures.karyawan();
+        karyawan.setId(4L);
+        when(appRoleRepository.findById(4L)).thenReturn(Optional.of(karyawan));
 
         UserForm form = new UserForm();
         form.setEmail("karyawan2@company.local");
         form.setFullName("Karyawan Dua");
-        form.setRole(Role.KARYAWAN);
+        form.setRoleId(4L);
         form.setDivisionId(1L);
         form.setDivisionLeader(true);
 
@@ -78,18 +89,22 @@ class UserServiceTest {
 
     @Test
     void movingUserOutOfDivisionClearsOldLeadership() {
-        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder);
+        service = new UserService(userRepository, divisionRepository, divisionService, passwordEncoder, appRoleRepository);
 
         Division oldDivision = new Division("Old");
         oldDivision.setId(1L);
         Division newDivision = new Division("New");
         newDivision.setId(2L);
 
+        AppRole ketuaDivisi = AppRoleFixtures.ketuaDivisi();
+        ketuaDivisi.setId(3L);
+        when(appRoleRepository.findById(3L)).thenReturn(Optional.of(ketuaDivisi));
+
         User user = new User();
         user.setId(10L);
         user.setEmail("ketua@company.local");
         user.setFullName("Ketua");
-        user.setRole(Role.KETUA_DIVISI);
+        user.setRole(ketuaDivisi);
         user.setDivision(oldDivision);
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
@@ -100,7 +115,7 @@ class UserServiceTest {
         UserForm form = new UserForm();
         form.setEmail("ketua@company.local");
         form.setFullName("Ketua");
-        form.setRole(Role.KETUA_DIVISI);
+        form.setRoleId(3L);
         form.setDivisionId(2L);
         form.setDivisionLeader(true);
 

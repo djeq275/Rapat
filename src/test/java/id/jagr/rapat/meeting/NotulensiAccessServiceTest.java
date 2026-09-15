@@ -6,7 +6,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import id.jagr.rapat.division.Division;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +29,7 @@ class NotulensiAccessServiceTest {
         return division;
     }
 
-    private User user(Role role, Long id, Division division) {
+    private User user(AppRole role, Long id, Division division) {
         User user = new User();
         user.setId(id);
         user.setRole(role);
@@ -42,7 +43,7 @@ class NotulensiAccessServiceTest {
         Meeting meeting = new Meeting();
         meeting.setId(1L);
         meeting.setDivision(division(1L));
-        User admin = user(Role.ADMIN, 1L, null);
+        User admin = user(AppRoleFixtures.admin(), 1L, null);
 
         assertThat(service.canWrite(admin, meeting)).isTrue();
         assertThat(service.canManageNotetakers(admin, meeting)).isTrue();
@@ -55,7 +56,7 @@ class NotulensiAccessServiceTest {
         Meeting meeting = new Meeting();
         meeting.setId(1L);
         meeting.setDivision(division);
-        User ketua = user(Role.KETUA_DIVISI, 2L, division);
+        User ketua = user(AppRoleFixtures.ketuaDivisi(), 2L, division);
 
         assertThat(service.canWrite(ketua, meeting)).isTrue();
         assertThat(service.canManageNotetakers(ketua, meeting)).isTrue();
@@ -67,7 +68,7 @@ class NotulensiAccessServiceTest {
         Meeting meeting = new Meeting();
         meeting.setId(1L);
         meeting.setDivision(division(1L));
-        User karyawan = user(Role.KARYAWAN, 3L, division(1L));
+        User karyawan = user(AppRoleFixtures.karyawan(), 3L, division(1L));
 
         when(notetakerRepository.existsByMeetingIdAndUserId(1L, 3L)).thenReturn(true);
 
@@ -81,7 +82,7 @@ class NotulensiAccessServiceTest {
         Meeting meeting = new Meeting();
         meeting.setId(1L);
         meeting.setDivision(division(1L));
-        User karyawan = user(Role.KARYAWAN, 4L, division(1L));
+        User karyawan = user(AppRoleFixtures.karyawan(), 4L, division(1L));
 
         lenient().when(notetakerRepository.existsByMeetingIdAndUserId(1L, 4L)).thenReturn(false);
 
@@ -95,7 +96,7 @@ class NotulensiAccessServiceTest {
         Meeting meeting = new Meeting();
         meeting.setId(1L);
         meeting.setDivision(division(1L));
-        User otherKetua = user(Role.KETUA_DIVISI, 5L, division(2L));
+        User otherKetua = user(AppRoleFixtures.ketuaDivisi(), 5L, division(2L));
 
         lenient().when(notetakerRepository.existsByMeetingIdAndUserId(1L, 5L)).thenReturn(false);
 

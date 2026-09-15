@@ -7,7 +7,8 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 class KeycloakOidcUserService implements OAuth2UserService<OidcUserRequest, OidcUser> {
 
     private final UserRepository userRepository;
+    private final AppRoleRepository appRoleRepository;
     private final OidcUserService delegate;
 
     @Override
@@ -44,7 +46,7 @@ class KeycloakOidcUserService implements OAuth2UserService<OidcUserRequest, Oidc
         User user = new User();
         user.setEmail(email);
         user.setFullName(oidcUser.getFullName() != null ? oidcUser.getFullName() : email);
-        user.setRole(Role.KARYAWAN);
+        user.setRole(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KARYAWAN).orElseThrow());
         user.setEnabled(true);
         return userRepository.save(user);
     }

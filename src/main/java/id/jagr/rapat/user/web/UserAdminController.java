@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import id.jagr.rapat.division.DivisionRepository;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleRepository;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserService;
 
@@ -25,6 +25,7 @@ public class UserAdminController {
 
     private final UserService userService;
     private final DivisionRepository divisionRepository;
+    private final AppRoleRepository appRoleRepository;
 
     @GetMapping
     public String list(Model model) {
@@ -59,7 +60,7 @@ public class UserAdminController {
         UserForm form = new UserForm();
         form.setEmail(user.getEmail());
         form.setFullName(user.getFullName());
-        form.setRole(user.getRole());
+        form.setRoleId(user.getRole().getId());
         form.setEnabled(user.isEnabled());
         if (user.getDivision() != null) {
             form.setDivisionId(user.getDivision().getId());
@@ -89,6 +90,6 @@ public class UserAdminController {
 
     private void addReferenceData(Model model) {
         model.addAttribute("divisions", divisionRepository.findAll());
-        model.addAttribute("roles", Role.values());
+        model.addAttribute("roles", appRoleRepository.findAll());
     }
 }

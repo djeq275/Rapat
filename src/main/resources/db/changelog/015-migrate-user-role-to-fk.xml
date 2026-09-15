@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="015a-add-app-user-role-id-column" author="vibe1">
+        <addColumn tableName="app_user">
+            <column name="role_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="015b-backfill-app-user-role-id" author="vibe1">
+        <comment>Maps the old role name column onto the matching seeded app_role row (see 014b).</comment>
+        <sql>UPDATE app_user SET role_id = (SELECT id FROM app_role WHERE app_role.name = app_user.role)</sql>
+        <rollback>
+            <sql>UPDATE app_user SET role_id = NULL</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="015c-require-app-user-role-id" author="vibe1">
+        <addNotNullConstraint tableName="app_user" columnName="role_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <changeSet id="015d-add-app-user-role-fk" author="vibe1">
+        <addForeignKeyConstraint baseTableName="app_user" baseColumnNames="role_id"
+                                  constraintName="fk_app_user_role"
+                                  referencedTableName="app_role" referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="015e-drop-app-user-role-division-check" author="vibe1">
+        <comment>Superseded by AppRole.requiresDivision, enforced in UserService instead of a SQL CHECK (issue #45) -- role names are no longer hardcoded in the schema.</comment>
+        <sql>ALTER TABLE app_user DROP CONSTRAINT chk_app_user_role_division</sql>
+        <rollback>
+            <sql>ALTER TABLE app_user ADD CONSTRAINT chk_app_user_role_division
+                CHECK (role NOT IN ('KETUA_DIVISI', 'KARYAWAN') OR division_id IS NOT NULL)</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="015f-drop-app-user-role-column" author="vibe1">
+        <dropColumn tableName="app_user" columnName="role"/>
+        <rollback>
+            <addColumn tableName="app_user">
+                <column name="role" type="VARCHAR(32)"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

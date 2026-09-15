@@ -3,7 +3,6 @@ package id.jagr.rapat.meeting;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import id.jagr.rapat.user.Role;
 import id.jagr.rapat.user.User;
 
 import lombok.RequiredArgsConstructor;
@@ -42,12 +41,19 @@ public class NotulensiAccessService {
         }
     }
 
+    /**
+     * A role with {@code canOrganizeMeetings} manages every meeting if it also
+     * {@code canViewAllDivisions} (Admin's case today -- no division check at all), otherwise
+     * only meetings of its own division (Ketua Divisi's case today -- division must match).
+     */
     private boolean isManager(User user, Meeting meeting) {
-        if (user.getRole() == Role.ADMIN) {
+        if (!user.getRole().isCanOrganizeMeetings()) {
+            return false;
+        }
+        if (user.getRole().isCanViewAllDivisions()) {
             return true;
         }
-        return user.getRole() == Role.KETUA_DIVISI
-                && user.getDivision() != null
+        return user.getDivision() != null
                 && user.getDivision().getId().equals(meeting.getDivision().getId());
     }
 }

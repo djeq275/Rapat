@@ -21,6 +21,7 @@ public class UserService {
     private final DivisionRepository divisionRepository;
     private final DivisionService divisionService;
     private final PasswordEncoder passwordEncoder;
+    private final AppRoleRepository appRoleRepository;
 
     public List<User> findAll() {
         return userRepository.findAllWithDivision();
@@ -67,22 +68,28 @@ public class UserService {
                     throw new IllegalArgumentException("Email sudah dipakai");
                 });
 
-        boolean needsDivision = form.getRole() == Role.KETUA_DIVISI || form.getRole() == Role.KARYAWAN;
+        AppRole role = findRole(form.getRoleId());
+        boolean needsDivision = role.isRequiresDivision();
         if (needsDivision && form.getDivisionId() == null) {
             throw new IllegalArgumentException("Ketua Divisi/Karyawan wajib punya divisi");
         }
         if (!needsDivision && form.getDivisionId() != null) {
             throw new IllegalArgumentException("Admin/Direktur tidak boleh terikat ke satu divisi");
         }
-        if (form.isDivisionLeader() && form.getRole() != Role.KETUA_DIVISI) {
-            throw new IllegalArgumentException("Hanya Ketua Divisi yang bisa jadi pemimpin divisi");
+        if (form.isDivisionLeader() && !role.isCanOrganizeMeetings()) {
+            throw new IllegalArgumentException("Hanya role dengan kapabilitas organizer yang bisa jadi pemimpin divisi");
         }
+    }
+
+    private AppRole findRole(Long roleId) {
+        return appRoleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role tidak ditemukan"));
     }
 
     private void applyForm(User user, UserForm form) {
         user.setEmail(form.getEmail());
         user.setFullName(form.getFullName());
-        user.setRole(form.getRole());
+        user.setRole(findRole(form.getRoleId()));
         user.setEnabled(form.isEnabled());
         if (form.getDivisionId() != null) {
             Division division = divisionRepository.findById(form.getDivisionId())

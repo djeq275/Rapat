@@ -18,5 +18,7 @@
     <include file="db/changelog/011-add-meeting-telegram-group-message-text.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/012-create-keycloak-config-table.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/013-create-google-oauth-config-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/014-create-app-role-table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/015-migrate-user-role-to-fk.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

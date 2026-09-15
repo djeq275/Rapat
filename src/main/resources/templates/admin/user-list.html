@@ -23,7 +23,7 @@
         <tr th:each="user : ${users}">
             <td th:text="${user.email}"></td>
             <td th:text="${user.fullName}"></td>
-            <td th:text="${user.role}"></td>
+            <td th:text="${user.role.name}"></td>
             <td th:text="${user.division != null ? user.division.name : '-'}"></td>
             <td th:text="${user.enabled} ? 'Ya' : 'Tidak'"></td>
             <td>
