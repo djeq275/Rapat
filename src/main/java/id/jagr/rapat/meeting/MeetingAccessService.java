@@ -6,7 +6,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import id.jagr.rapat.division.Division;
-import id.jagr.rapat.user.Role;
 import id.jagr.rapat.user.User;
 
 import lombok.RequiredArgsConstructor;
@@ -41,7 +40,7 @@ public class MeetingAccessService {
     }
 
     private boolean isCompanyWide(User viewer) {
-        return viewer.getRole() == Role.ADMIN || viewer.getRole() == Role.DIREKTUR;
+        return viewer.getRole().isCanViewAllDivisions();
     }
 
     private Division requireDivision(User viewer) {

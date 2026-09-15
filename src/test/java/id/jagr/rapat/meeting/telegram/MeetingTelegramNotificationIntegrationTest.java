@@ -27,7 +27,8 @@ import id.jagr.rapat.telegram.TelegramGroup;
 import id.jagr.rapat.telegram.TelegramGroupRepository;
 import id.jagr.rapat.telegram.TelegramSendException;
 import id.jagr.rapat.telegram.TelegramSendStatus;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -66,6 +67,8 @@ class MeetingTelegramNotificationIntegrationTest {
     @Autowired
     UserRepository userRepository;
     @Autowired
+    AppRoleRepository appRoleRepository;
+    @Autowired
     TelegramGroupRepository telegramGroupRepository;
     @Autowired
     MeetingTelegramGroupRepository meetingTelegramGroupRepository;
@@ -81,7 +84,7 @@ class MeetingTelegramNotificationIntegrationTest {
         ketua = new User();
         ketua.setEmail("ketua-" + System.nanoTime() + "@company.local");
         ketua.setFullName("Ketua Divisi Test");
-        ketua.setRole(Role.KETUA_DIVISI);
+        ketua.setRole(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KETUA_DIVISI).orElseThrow());
         ketua.setDivision(division);
         ketua = userRepository.save(ketua);
 

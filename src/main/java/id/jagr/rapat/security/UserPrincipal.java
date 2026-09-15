@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
 import id.jagr.rapat.user.User;
 
 /**
@@ -47,7 +47,7 @@ public class UserPrincipal implements UserDetails, OidcUser {
         return user.getFullName();
     }
 
-    public Role getRole() {
+    public AppRole getRole() {
         return user.getRole();
     }
 
@@ -67,7 +67,7 @@ public class UserPrincipal implements UserDetails, OidcUser {
 
     @Override
     public List<GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
     }
 
     @Override

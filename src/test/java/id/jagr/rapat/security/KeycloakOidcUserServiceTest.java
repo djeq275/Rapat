@@ -13,7 +13,10 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.AppRoleFixtures;
+import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -31,6 +34,8 @@ class KeycloakOidcUserServiceTest {
     @Mock
     UserRepository userRepository;
     @Mock
+    AppRoleRepository appRoleRepository;
+    @Mock
     OidcUserService delegate;
     @Mock
     OidcUserRequest userRequest;
@@ -39,10 +44,12 @@ class KeycloakOidcUserServiceTest {
 
     @Test
     void autoProvisionsNewAccountForUnregisteredEmail() {
-        service = new KeycloakOidcUserService(userRepository, delegate);
+        service = new KeycloakOidcUserService(userRepository, appRoleRepository, delegate);
         OidcUser oidcUser = stubOidcUser("karyawan.baru@company.local", "Karyawan Baru");
         when(delegate.loadUser(userRequest)).thenReturn(oidcUser);
         when(userRepository.findByEmailIgnoreCase("karyawan.baru@company.local")).thenReturn(Optional.empty());
+        AppRole karyawan = AppRoleFixtures.karyawan();
+        when(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KARYAWAN)).thenReturn(Optional.of(karyawan));
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         OidcUser result = service.loadUser(userRequest);
@@ -51,23 +58,24 @@ class KeycloakOidcUserServiceTest {
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().getEmail()).isEqualTo("karyawan.baru@company.local");
         assertThat(captor.getValue().getFullName()).isEqualTo("Karyawan Baru");
-        assertThat(captor.getValue().getRole()).isEqualTo(Role.KARYAWAN);
+        assertThat(captor.getValue().getRole()).isEqualTo(karyawan);
         assertThat(captor.getValue().getDivision()).isNull();
         assertThat(captor.getValue().isEnabled()).isTrue();
 
         assertThat(result).isInstanceOf(UserPrincipal.class);
-        assertThat(((UserPrincipal) result).getRole()).isEqualTo(Role.KARYAWAN);
+        assertThat(((UserPrincipal) result).getRole()).isEqualTo(karyawan);
     }
 
     @Test
     void fallsBackToEmailAsFullNameWhenNameClaimMissing() {
-        service = new KeycloakOidcUserService(userRepository, delegate);
+        service = new KeycloakOidcUserService(userRepository, appRoleRepository, delegate);
         DefaultOidcUser oidcUser = mock(DefaultOidcUser.class);
         lenient().when(oidcUser.getEmail()).thenReturn("noname@company.local");
         lenient().when(oidcUser.getAttributes()).thenReturn(Map.of("email", "noname@company.local"));
         lenient().when(oidcUser.getFullName()).thenReturn(null);
         when(delegate.loadUser(userRequest)).thenReturn(oidcUser);
         when(userRepository.findByEmailIgnoreCase("noname@company.local")).thenReturn(Optional.empty());
+        when(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KARYAWAN)).thenReturn(Optional.of(AppRoleFixtures.karyawan()));
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.loadUser(userRequest);
@@ -79,22 +87,23 @@ class KeycloakOidcUserServiceTest {
 
     @Test
     void reusesExistingAccountForKnownEmailWithoutCreatingDuplicate() {
-        service = new KeycloakOidcUserService(userRepository, delegate);
+        service = new KeycloakOidcUserService(userRepository, appRoleRepository, delegate);
         OidcUser oidcUser = stubOidcUser("ketua@company.local", "Ketua Existing");
         when(delegate.loadUser(userRequest)).thenReturn(oidcUser);
 
+        AppRole ketuaDivisi = AppRoleFixtures.ketuaDivisi();
         User existing = new User();
         existing.setId(42L);
         existing.setEmail("ketua@company.local");
         existing.setFullName("Ketua Existing");
-        existing.setRole(Role.KETUA_DIVISI);
+        existing.setRole(ketuaDivisi);
         existing.setEnabled(true);
         when(userRepository.findByEmailIgnoreCase("ketua@company.local")).thenReturn(Optional.of(existing));
 
         OidcUser result = service.loadUser(userRequest);
 
         verify(userRepository, never()).save(any());
-        assertThat(((UserPrincipal) result).getRole()).isEqualTo(Role.KETUA_DIVISI);
+        assertThat(((UserPrincipal) result).getRole()).isEqualTo(ketuaDivisi);
     }
 
     private OidcUser stubOidcUser(String email, String fullName) {

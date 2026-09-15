@@ -12,7 +12,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRole;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -44,17 +45,18 @@ class GoogleOidcUserServiceTest {
         OidcUser googleUser = stubOidcUser("direktur@company.local");
         when(delegate.loadUser(userRequest)).thenReturn(googleUser);
 
+        AppRole direktur = AppRoleFixtures.direktur();
         User user = new User();
         user.setEmail("direktur@company.local");
         user.setFullName("Direktur");
-        user.setRole(Role.DIREKTUR);
+        user.setRole(direktur);
         user.setEnabled(true);
         when(userRepository.findByEmailIgnoreCase("direktur@company.local")).thenReturn(Optional.of(user));
 
         OidcUser result = service.loadUser(userRequest);
 
         assertThat(result).isInstanceOf(UserPrincipal.class);
-        assertThat(((UserPrincipal) result).getRole()).isEqualTo(Role.DIREKTUR);
+        assertThat(((UserPrincipal) result).getRole()).isEqualTo(direktur);
     }
 
     @Test

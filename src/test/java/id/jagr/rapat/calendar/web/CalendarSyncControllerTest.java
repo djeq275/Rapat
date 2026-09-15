@@ -15,7 +15,7 @@ import id.jagr.rapat.calendar.CalendarSyncService;
 import id.jagr.rapat.meeting.MeetingSyncAuthorizationPort;
 import id.jagr.rapat.security.AppOidcUserService;
 import id.jagr.rapat.security.SecurityConfig;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -58,7 +58,7 @@ class CalendarSyncControllerTest {
         User otherKetua = new User();
         otherKetua.setId(7L);
         otherKetua.setEmail("ketua-lain@company.local");
-        otherKetua.setRole(Role.KETUA_DIVISI);
+        otherKetua.setRole(AppRoleFixtures.ketuaDivisi());
 
         when(userRepository.findByEmailIgnoreCase("ketua-lain@company.local")).thenReturn(Optional.of(otherKetua));
         doThrow(new AccessDeniedException("Anda tidak berhak menjalankan ulang sync rapat ini"))
@@ -77,7 +77,7 @@ class CalendarSyncControllerTest {
         User organizer = new User();
         organizer.setId(1L);
         organizer.setEmail("ketua@company.local");
-        organizer.setRole(Role.KETUA_DIVISI);
+        organizer.setRole(AppRoleFixtures.ketuaDivisi());
 
         when(userRepository.findByEmailIgnoreCase("ketua@company.local")).thenReturn(Optional.of(organizer));
 

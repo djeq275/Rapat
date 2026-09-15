@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import id.jagr.rapat.division.Division;
 import id.jagr.rapat.division.DivisionRepository;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -55,22 +55,22 @@ class MeetingServiceTest {
 
         User organizer = new User();
         organizer.setId(10L);
-        organizer.setRole(Role.KETUA_DIVISI);
+        organizer.setRole(AppRoleFixtures.ketuaDivisi());
         organizer.setDivision(division);
 
         User karyawan = new User();
         karyawan.setId(20L);
-        karyawan.setRole(Role.KARYAWAN);
+        karyawan.setRole(AppRoleFixtures.karyawan());
         karyawan.setDivision(division);
 
         User direktur = new User();
         direktur.setId(99L);
-        direktur.setRole(Role.DIREKTUR);
+        direktur.setRole(AppRoleFixtures.direktur());
 
         when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));
         when(userRepository.findById(10L)).thenReturn(Optional.of(organizer));
         when(userRepository.findById(20L)).thenReturn(Optional.of(karyawan));
-        when(userRepository.findByRole(Role.DIREKTUR)).thenReturn(List.of(direktur));
+        when(userRepository.findByRole_AutoInviteToAllMeetingsTrue()).thenReturn(List.of(direktur));
         lenient().when(meetingRepository.save(any())).thenAnswer(invocation -> {
             Meeting m = invocation.getArgument(0);
             if (m.getId() == null) {
@@ -109,7 +109,7 @@ class MeetingServiceTest {
 
         User organizer = new User();
         organizer.setId(10L);
-        organizer.setRole(Role.KETUA_DIVISI);
+        organizer.setRole(AppRoleFixtures.ketuaDivisi());
         organizer.setDivision(otherDivision);
 
         when(divisionRepository.findById(1L)).thenReturn(Optional.of(division));

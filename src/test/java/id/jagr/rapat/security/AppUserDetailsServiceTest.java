@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -31,7 +31,7 @@ class AppUserDetailsServiceTest {
         user.setEmail("ketua@company.local");
         user.setPasswordHash("hashed");
         user.setFullName("Ketua Divisi");
-        user.setRole(Role.KETUA_DIVISI);
+        user.setRole(AppRoleFixtures.ketuaDivisi());
         when(userRepository.findByEmailIgnoreCase("ketua@company.local")).thenReturn(Optional.of(user));
 
         UserPrincipal principal = (UserPrincipal) service.loadUserByUsername("ketua@company.local");
@@ -56,7 +56,7 @@ class AppUserDetailsServiceTest {
         user.setEmail("karyawan@company.local");
         user.setPasswordHash(null);
         user.setFullName("Karyawan");
-        user.setRole(Role.KARYAWAN);
+        user.setRole(AppRoleFixtures.karyawan());
         when(userRepository.findByEmailIgnoreCase("karyawan@company.local")).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> service.loadUserByUsername("karyawan@company.local"))

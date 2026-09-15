@@ -24,7 +24,8 @@ import id.jagr.rapat.security.SecurityConfig;
 import id.jagr.rapat.telegram.DivisionTelegramGroupService;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
 import id.jagr.rapat.telegram.TelegramGroupService;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.AppRoleFixtures;
+import id.jagr.rapat.user.AppRoleRepository;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -64,6 +65,8 @@ class MeetingControllerAccessTest {
     @MockitoBean
     UserRepository userRepository;
     @MockitoBean
+    AppRoleRepository appRoleRepository;
+    @MockitoBean
     AppOidcUserService appOidcUserService;
     @MockitoBean
     ClientRegistrationRepository clientRegistrationRepository;
@@ -86,7 +89,7 @@ class MeetingControllerAccessTest {
 
         User karyawan = new User();
         karyawan.setEmail("karyawan@company.local");
-        karyawan.setRole(Role.KARYAWAN);
+        karyawan.setRole(AppRoleFixtures.karyawan());
 
         when(userRepository.findByEmailIgnoreCase("karyawan@company.local")).thenReturn(Optional.of(karyawan));
         when(meetingRepository.findDetailById(5L)).thenReturn(Optional.of(meeting));
@@ -106,7 +109,7 @@ class MeetingControllerAccessTest {
     void telegramRetryDeniedForNonOrganizerSurfacesAs403AndNeverRetries() throws Exception {
         User otherKetua = new User();
         otherKetua.setEmail("ketua-lain@company.local");
-        otherKetua.setRole(Role.KETUA_DIVISI);
+        otherKetua.setRole(AppRoleFixtures.ketuaDivisi());
 
         when(userRepository.findByEmailIgnoreCase("ketua-lain@company.local")).thenReturn(Optional.of(otherKetua));
         doThrow(new AccessDeniedException("Anda tidak berhak menjalankan ulang sync rapat ini"))
@@ -124,7 +127,7 @@ class MeetingControllerAccessTest {
     void telegramRetryAllowedForOrganizerRedirectsAndRetries() throws Exception {
         User organizer = new User();
         organizer.setEmail("ketua@company.local");
-        organizer.setRole(Role.KETUA_DIVISI);
+        organizer.setRole(AppRoleFixtures.ketuaDivisi());
 
         when(userRepository.findByEmailIgnoreCase("ketua@company.local")).thenReturn(Optional.of(organizer));
 

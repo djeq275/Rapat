@@ -19,9 +19,9 @@
             <input class="form-control" id="fullName" th:field="*{fullName}"/>
         </div>
         <div class="mb-3">
-            <label class="form-label" for="role">Role</label>
-            <select class="form-select" id="role" th:field="*{role}">
-                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+            <label class="form-label" for="roleId">Role</label>
+            <select class="form-select" id="roleId" th:field="*{roleId}">
+                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.name}"></option>
             </select>
         </div>
         <div class="mb-3">

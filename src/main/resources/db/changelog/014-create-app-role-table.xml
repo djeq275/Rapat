@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="014-create-app-role-table" author="vibe1">
+        <comment>
+            Role becomes data instead of a fixed Java enum (issue #43/#45), so Admin can add
+            custom roles later. built_in rows below can never be deleted/renamed from the admin
+            UI. The 3 behavior flags replace what used to be hardcoded checks against specific
+            role names (issue #48) -- see AppRole's javadoc for exactly which code they gate.
+        </comment>
+        <createTable tableName="app_role">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_app_role_name"/>
+            </column>
+            <column name="built_in" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="requires_division" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="auto_invite_to_all_meetings" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="can_view_all_divisions" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="can_organize_meetings" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="014b-seed-built-in-roles" author="vibe1">
+        <comment>
+            Flag values reproduce today's Admin/Direktur/Ketua Divisi/Karyawan behavior exactly
+            -- see MeetingService (auto-invite, organizer), MeetingAccessService (isCompanyWide),
+            NotulensiAccessService (isManager). No user-visible behavior change (issue #45).
+        </comment>
+        <insert tableName="app_role">
+            <column name="name" value="ADMIN"/>
+            <column name="built_in" valueBoolean="true"/>
+            <column name="requires_division" valueBoolean="false"/>
+            <column name="auto_invite_to_all_meetings" valueBoolean="false"/>
+            <column name="can_view_all_divisions" valueBoolean="true"/>
+            <column name="can_organize_meetings" valueBoolean="true"/>
+        </insert>
+        <insert tableName="app_role">
+            <column name="name" value="DIREKTUR"/>
+            <column name="built_in" valueBoolean="true"/>
+            <column name="requires_division" valueBoolean="false"/>
+            <column name="auto_invite_to_all_meetings" valueBoolean="true"/>
+            <column name="can_view_all_divisions" valueBoolean="true"/>
+            <column name="can_organize_meetings" valueBoolean="false"/>
+        </insert>
+        <insert tableName="app_role">
+            <column name="name" value="KETUA_DIVISI"/>
+            <column name="built_in" valueBoolean="true"/>
+            <column name="requires_division" valueBoolean="true"/>
+            <column name="auto_invite_to_all_meetings" valueBoolean="false"/>
+            <column name="can_view_all_divisions" valueBoolean="false"/>
+            <column name="can_organize_meetings" valueBoolean="true"/>
+        </insert>
+        <insert tableName="app_role">
+            <column name="name" value="KARYAWAN"/>
+            <column name="built_in" valueBoolean="true"/>
+            <column name="requires_division" valueBoolean="true"/>
+            <column name="auto_invite_to_all_meetings" valueBoolean="false"/>
+            <column name="can_view_all_divisions" valueBoolean="false"/>
+            <column name="can_organize_meetings" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

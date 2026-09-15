@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import id.jagr.rapat.division.Division;
 import id.jagr.rapat.division.DivisionRepository;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
-import id.jagr.rapat.user.Role;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -39,7 +39,7 @@ public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPo
         User organizer = userRepository.findById(command.organizerId())
                 .orElseThrow(() -> new IllegalArgumentException("Organizer tidak ditemukan"));
 
-        if (organizer.getRole() != Role.KETUA_DIVISI
+        if (!organizer.getRole().isCanOrganizeMeetings()
                 || organizer.getDivision() == null
                 || !organizer.getDivision().getId().equals(division.getId())) {
             throw new IllegalArgumentException("Hanya Ketua Divisi dari divisi tersebut yang bisa membuat rapat ini");
@@ -68,8 +68,8 @@ public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPo
             addParticipant(meeting, participant, ParticipantAddedReason.SELECTED);
         }
 
-        for (User direktur : userRepository.findByRole(Role.DIREKTUR)) {
-            addParticipant(meeting, direktur, ParticipantAddedReason.DIREKTUR_AUTO);
+        for (User autoInvited : userRepository.findByRole_AutoInviteToAllMeetingsTrue()) {
+            addParticipant(meeting, autoInvited, ParticipantAddedReason.DIREKTUR_AUTO);
         }
 
         if (!command.telegramGroupIds().isEmpty()) {
@@ -146,7 +146,7 @@ public class MeetingService implements MeetingSyncQueryPort, MeetingSyncStatusPo
     public boolean canRetrySync(User user, Long meetingId) {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new IllegalArgumentException("Rapat tidak ditemukan: " + meetingId));
-        return user.getRole() == Role.ADMIN || user.getId().equals(meeting.getOrganizer().getId());
+        return BuiltInRoleNames.ADMIN.equals(user.getRole().getName()) || user.getId().equals(meeting.getOrganizer().getId());
     }
 
     @Override
