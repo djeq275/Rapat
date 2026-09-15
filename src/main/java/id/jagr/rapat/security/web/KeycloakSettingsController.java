@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 /** The client secret is never redisplayed once saved -- only whether one is currently set. */
 @Controller
 @RequestMapping("/admin/keycloak/settings")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_KEYCLOAK_CONFIG')")
 @RequiredArgsConstructor
 public class KeycloakSettingsController {
 

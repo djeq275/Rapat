@@ -103,4 +103,50 @@ class NotulensiAccessServiceTest {
         assertThat(service.canWrite(otherKetua, meeting)).isFalse();
         assertThat(service.canManageNotetakers(otherKetua, meeting)).isFalse();
     }
+
+    @Test
+    void customRoleWithOrganizeAndViewAllFlagsCanAlwaysWriteAndManage() {
+        service = new NotulensiAccessService(notetakerRepository);
+        Meeting meeting = new Meeting();
+        meeting.setId(1L);
+        meeting.setDivision(division(1L));
+        AppRole direksiOperasional = new AppRole("Direksi Operasional", false, false, false, true, true);
+        User user = user(direksiOperasional, 6L, null);
+
+        assertThat(service.canWrite(user, meeting)).isTrue();
+        assertThat(service.canManageNotetakers(user, meeting)).isTrue();
+    }
+
+    @Test
+    void customRoleWithOrganizeFlagOnlyManagesOwnDivision() {
+        service = new NotulensiAccessService(notetakerRepository);
+        Division division = division(1L);
+        Meeting meeting = new Meeting();
+        meeting.setId(1L);
+        meeting.setDivision(division);
+        AppRole manajerRegional = new AppRole("Manajer Regional", false, true, false, false, true);
+        User sameDivision = user(manajerRegional, 7L, division);
+        User otherDivision = user(manajerRegional, 8L, division(2L));
+
+        lenient().when(notetakerRepository.existsByMeetingIdAndUserId(1L, 8L)).thenReturn(false);
+
+        assertThat(service.canWrite(sameDivision, meeting)).isTrue();
+        assertThat(service.canManageNotetakers(sameDivision, meeting)).isTrue();
+        assertThat(service.canWrite(otherDivision, meeting)).isFalse();
+        assertThat(service.canManageNotetakers(otherDivision, meeting)).isFalse();
+    }
+
+    /** Direktur has canViewAllDivisions=true but not canOrganizeMeetings -- viewing all meetings must not imply managing their notulensi. */
+    @Test
+    void directurCannotManageNotetakersDespiteViewingAllDivisions() {
+        service = new NotulensiAccessService(notetakerRepository);
+        Meeting meeting = new Meeting();
+        meeting.setId(1L);
+        meeting.setDivision(division(1L));
+        User direktur = user(AppRoleFixtures.direktur(), 9L, null);
+
+        lenient().when(notetakerRepository.existsByMeetingIdAndUserId(1L, 9L)).thenReturn(false);
+
+        assertThat(service.canManageNotetakers(direktur, meeting)).isFalse();
+    }
 }

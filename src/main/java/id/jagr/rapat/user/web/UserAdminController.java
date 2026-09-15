@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/admin/users")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_USERS')")
 @RequiredArgsConstructor
 public class UserAdminController {
 

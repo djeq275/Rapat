@@ -10,13 +10,14 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * role is LAZY and never null -- eagerly fetched here because every login path
-     * (form/Google/Keycloak) calls this to build the security principal, and
-     * UserPrincipal.getAuthorities() reads user.getRole() *after* the request's own
-     * transaction (if any) has already closed, so a plain derived query would throw
-     * LazyInitializationException on the very first authenticated request.
+     * role is LAZY and never null, and role.capabilities is LAZY too (issue #47) --
+     * both eagerly fetched here because every login path (form/Google/Keycloak) calls
+     * this to build the security principal, and UserPrincipal.getAuthorities() reads
+     * user.getRole().getCapabilities() *after* the request's own transaction (if any)
+     * has already closed, so a plain derived query would throw LazyInitializationException
+     * on the very first authenticated request (bit us twice already -- see issue #45/#46).
      */
-    @Query("select u from User u join fetch u.role where lower(u.email) = lower(:email)")
+    @Query("select u from User u join fetch u.role r left join fetch r.capabilities where lower(u.email) = lower(:email)")
     Optional<User> findByEmailIgnoreCase(@Param("email") String email);
 
     List<User> findByRole_AutoInviteToAllMeetingsTrue();

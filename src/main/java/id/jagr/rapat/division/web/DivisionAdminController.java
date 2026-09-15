@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/admin/divisions")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('CAPABILITY_MANAGE_DIVISIONS')")
 @RequiredArgsConstructor
 public class DivisionAdminController {
 
