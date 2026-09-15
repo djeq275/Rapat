@@ -1,12 +1,15 @@
 package id.jagr.rapat.meeting.web;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,8 +27,10 @@ import id.jagr.rapat.security.SecurityConfig;
 import id.jagr.rapat.telegram.DivisionTelegramGroupService;
 import id.jagr.rapat.telegram.MeetingTelegramNotificationService;
 import id.jagr.rapat.telegram.TelegramGroupService;
+import id.jagr.rapat.user.AppRole;
 import id.jagr.rapat.user.AppRoleFixtures;
 import id.jagr.rapat.user.AppRoleRepository;
+import id.jagr.rapat.user.BuiltInRoleNames;
 import id.jagr.rapat.user.User;
 import id.jagr.rapat.user.UserRepository;
 
@@ -138,5 +143,116 @@ class MeetingControllerAccessTest {
 
         verify(meetingService).assertCanRetrySync(organizer, 9L);
         verify(meetingTelegramNotificationService).retry(9L, 3L);
+    }
+
+    /**
+     * Admin's AppRole is seeded canOrganizeMeetings=true (issue #45), so its UserPrincipal now
+     * carries CAN_ORGANIZE_MEETINGS (issue #53) -- must still not be able to reach the create
+     * form, since Admin structurally never has a division. Pins down that this is a clean 403
+     * from assertHasDivision(), not a 500 from a null organizer.getDivision().
+     */
+    @Test
+    void adminWithCanOrganizeMeetingsAuthorityStillGets403ForNewMeetingFormDueToNoDivision() throws Exception {
+        User admin = new User();
+        admin.setEmail("admin@company.local");
+        admin.setRole(AppRoleFixtures.admin());
+        admin.setDivision(null);
+
+        when(userRepository.findByEmailIgnoreCase("admin@company.local")).thenReturn(Optional.of(admin));
+
+        mockMvc.perform(get("/meetings/new").with(user("admin@company.local")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void customRoleWithoutCanOrganizeMeetingsAuthorityGets403ForNewMeetingForm() throws Exception {
+        mockMvc.perform(get("/meetings/new").with(user("peninjau@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAPABILITY_MANAGE_DIVISIONS"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void customRoleWithCanOrganizeMeetingsAndDivisionCanAccessNewMeetingForm() throws Exception {
+        Division division = new Division("Engineering");
+        division.setId(1L);
+        AppRole manajerRegional = new AppRole("Manajer Regional", false, true, false, false, true);
+        User organizer = new User();
+        organizer.setEmail("manajer@company.local");
+        organizer.setRole(manajerRegional);
+        organizer.setDivision(division);
+
+        when(userRepository.findByEmailIgnoreCase("manajer@company.local")).thenReturn(Optional.of(organizer));
+        when(divisionTelegramGroupService.findFavoriteGroupIds(1L)).thenReturn(Set.of());
+        when(appRoleRepository.findByNameIgnoreCase(BuiltInRoleNames.KARYAWAN)).thenReturn(Optional.of(AppRoleFixtures.karyawan()));
+        when(userRepository.findByDivisionIdAndRole(eq(1L), any())).thenReturn(List.of());
+        when(telegramGroupService.findActive()).thenReturn(List.of());
+
+        mockMvc.perform(get("/meetings/new").with(user("manajer@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void customRoleWithCanOrganizeMeetingsButNoDivisionGets403ForNewMeetingForm() throws Exception {
+        AppRole manajerRegional = new AppRole("Manajer Regional", false, false, false, false, true);
+        User organizer = new User();
+        organizer.setEmail("manajer-tanpa-divisi@company.local");
+        organizer.setRole(manajerRegional);
+        organizer.setDivision(null);
+
+        when(userRepository.findByEmailIgnoreCase("manajer-tanpa-divisi@company.local")).thenReturn(Optional.of(organizer));
+
+        mockMvc.perform(get("/meetings/new").with(user("manajer-tanpa-divisi@company.local")
+                        .authorities(new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminWithCanOrganizeMeetingsAuthorityStillGets403ForCreatePost() throws Exception {
+        User admin = new User();
+        admin.setEmail("admin@company.local");
+        admin.setRole(AppRoleFixtures.admin());
+        admin.setDivision(null);
+
+        when(userRepository.findByEmailIgnoreCase("admin@company.local")).thenReturn(Optional.of(admin));
+
+        mockMvc.perform(post("/meetings")
+                        .with(user("admin@company.local")
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS")))
+                        .with(csrf())
+                        .param("title", "Rapat Percobaan")
+                        .param("startTime", "2026-01-01T10:00")
+                        .param("endTime", "2026-01-01T11:00"))
+                .andExpect(status().isForbidden());
+
+        verify(meetingService, never()).create(any());
+    }
+
+    @Test
+    void customRoleWithCanOrganizeMeetingsAndDivisionCanCreateMeetingViaPost() throws Exception {
+        Division division = new Division("Engineering");
+        division.setId(1L);
+        AppRole manajerRegional = new AppRole("Manajer Regional", false, true, false, false, true);
+        User organizer = new User();
+        organizer.setId(42L);
+        organizer.setEmail("manajer@company.local");
+        organizer.setRole(manajerRegional);
+        organizer.setDivision(division);
+
+        when(userRepository.findByEmailIgnoreCase("manajer@company.local")).thenReturn(Optional.of(organizer));
+        Meeting created = new Meeting();
+        created.setId(200L);
+        when(meetingService.create(any())).thenReturn(created);
+
+        mockMvc.perform(post("/meetings")
+                        .with(user("manajer@company.local").authorities(new SimpleGrantedAuthority("CAN_ORGANIZE_MEETINGS")))
+                        .with(csrf())
+                        .param("title", "Rapat Regional")
+                        .param("startTime", "2026-01-01T10:00")
+                        .param("endTime", "2026-01-01T11:00"))
+                .andExpect(status().is3xxRedirection());
+
+        verify(meetingService).create(any());
     }
 }
